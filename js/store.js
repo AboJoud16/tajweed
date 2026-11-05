@@ -26,6 +26,7 @@ window.TAJWEED = window.TAJWEED || {};
 TAJWEED.store = (function () {
   const KEY = 'tajweed:progress';
   const SETTINGS = 'tajweed:settings';
+  const MUSHAF = 'tajweed:mushaf';
   const def = () => ({ chapters: {}, quizzes: {}, practice: { asked: 0, correct: 0, byRule: {} }, lastChapter: null, days: [] });
   let state = null; // in-memory copy, loaded lazily once
   function load() {
@@ -86,7 +87,10 @@ TAJWEED.store = (function () {
       });
       return max ? Math.round(100 * pts / max) : 0;
     },
-    reset() { state = def(); save(); },
+    /* تفضيلات المصحف: آخر قراءة، العلامات، التلوين، طريقة العرض */
+    mushaf() { const d = { last: null, bookmarks: [], color: true, mode: 'flow' }; try { return Object.assign(d, JSON.parse(localStorage.getItem(MUSHAF) || '{}')); } catch (e) { return d; } },
+    setMushaf(patch) { const m = api.mushaf(); Object.assign(m, patch); try { localStorage.setItem(MUSHAF, JSON.stringify(m)); } catch (e) {} return m; },
+    reset() { state = def(); save(); try { localStorage.removeItem(MUSHAF); } catch (e) {} },
   };
   return api;
 })();

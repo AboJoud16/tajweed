@@ -166,6 +166,7 @@ window.TAJWEED = window.TAJWEED || {};
   function openSheet(html) { sheet.innerHTML = html; sheet.classList.add('open'); backdrop.classList.add('open'); sheet.focus?.(); }
   function closeSheet() { sheet.classList.remove('open'); backdrop.classList.remove('open'); if (activeSpan) { activeSpan.classList.remove('active'); activeSpan = null; } }
   T.closeSheet = closeSheet;
+  T.openSheet = openSheet;
   backdrop.addEventListener('click', closeSheet);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 

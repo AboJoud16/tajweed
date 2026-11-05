@@ -1,4 +1,4 @@
-/* عامل الخدمة: يخزّن ملفات التطبيق للعمل دون اتصال. التلاوات تُحمَّل من الشبكة دائمًا. */
+/* عامل الخدمة: يخزّن ملفات التطبيق للعمل دون اتصال، وسور المصحف بعد أول زيارة لها. التلاوات تُحمَّل من الشبكة دائمًا. */
 /*
  * sw.js — Service worker (registered at the end of js/app.js, only over http/https).
  *
@@ -9,16 +9,17 @@
  * offline after one visit.
  *
  * Cross-origin requests (everyayah.com audio) are not touched at all.
+ * data/mushaf/NNN.json surah files are cached the same way the first time a surah is opened.
  *
  * When you add a new file the app needs offline, add it to SHELL so it is
  * cached at install time. Changing CACHE (e.g. 'tajweed-v2') makes the next
  * activation delete the old cache.
  */
-const CACHE = 'tajweed-v1';
+const CACHE = 'tajweed-v2';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/fonts.css', './css/app.css',
   './js/data/rules.js', './js/data/chapters.js', './js/data/quizzes.js', './js/data/glossary.js',
-  './js/store.js', './js/ayah.js', './js/app.js', './icons/icon.svg',
+  './js/store.js', './js/ayah.js', './js/mushaf.js', './js/app.js', './icons/icon.svg', './data/mushaf/index.json',
   './fonts/amiri-quran-400-arabic.woff2', './fonts/amiri-400-arabic.woff2', './fonts/amiri-700-arabic.woff2',
   './fonts/noto-naskh-arabic-400-arabic.woff2', './fonts/noto-naskh-arabic-700-arabic.woff2',
 ];

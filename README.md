@@ -6,6 +6,7 @@
 
 ## ما الذي يقدّمه
 
+- **المصحف كاملًا** بالرسم العثماني (نص Tanzil برواية حفص، مُتحقَّق منه ومقارَن حرفًا بحرف مع نص مجمع الملك فهد)، مع تلوين أحكام التجويد في كل آية كمُعين تعليمي يمكن إخفاؤه، وعلامات الوقف والسجدة والأحزاب، وفهرس السور والأجزاء، وعلامات القراءة، وتلاوة متواصلة للسورة، وحفظ آخر موضع قراءة. تفاصيل المصادر والتحقق في `REFERENCES.md` و`data/mushaf/VERIFICATION.md`.
 - **مسار تعلّم مرتّب** من ١٣ بابًا: المدخل، المخارج، الصفات، النون الساكنة والتنوين، الميم الساكنة، المدود، القلقلة، الراء، اللام، التفخيم والترقيق، الإدغام العام، الوقف والسكت، همزة الوصل والقطع.
 - **آيات ملوّنة بالأحكام** (١٥١ مثالًا، ١٨٢ موضعًا مظلّلًا): المس أي جزء ملوّن لتظهر بطاقة تشرح الحكم، ولماذا ينطبق هنا تحديدًا، وكيف يُؤدّى.
 - **تلاوات صوتية** لكل آية مثال من everyayah.com باختيار القارئ (الحصري، الحصري المعلّم، عبد الباسط، المنشاوي، العفاسي).
@@ -27,8 +28,12 @@ js/data/quizzes.js    الاختبارات
 js/data/glossary.js   المصطلحات
 js/store.js           التقدّم والإعدادات (localStorage)
 js/ayah.js            عرض الآيات، بطاقة الشرح، الصوت
+js/mushaf.js          المصحف: فهرس السور، صفحة القراءة، التلاوة المتواصلة
 js/app.js             التوجيه والصفحات
+data/mushaf/          نص المصحف ومواضع الأحكام وعلامات الوقف (ملف لكل سورة) وتقرير التحقق
+scripts/build_mushaf.py  يبني data/mushaf من المصادر ويتحقق منها (python3 -I scripts/build_mushaf.py)
 scripts/validate.js   فحص سلامة البيانات (npm test)
+REFERENCES.md         قائمة المصادر والتراخيص وطريقة التحقق منها
 ```
 
 ## ترميز الأمثلة
@@ -50,6 +55,7 @@ scripts/validate.js   فحص سلامة البيانات (npm test)
 
 ## الترخيص والمصادر
 
+- نص المصحف من Tanzil.net (رخصة CC BY 3.0، لا يجوز تعديله) ويُنقل حرفيًّا؛ علامات الوقف من نص مجمع الملك فهد؛ تظليل الأحكام من مشروع quran-tajweed (CC BY 4.0) بعد إعادة محاذاته والتحقق منه. القائمة الكاملة بالروابط والبصمات في `REFERENCES.md`.
 - الخطوط Amiri وAmiri Quran وNoto Naskh Arabic برخصة SIL Open Font License 1.1 (`fonts/OFL.txt`).
 - التلاوات تُبثّ من everyayah.com ولا تُخزَّن في المشروع.
 - المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن.
@@ -67,9 +73,10 @@ A quick orientation for new contributors. Every file also starts with a header c
 ### How it fits together
 
 - Plain classic `<script>` tags, no modules or framework, so the app also works from `file://`. Everything hangs off one global object, `window.TAJWEED` (usually aliased as `T`).
-- Load order in `index.html` matters: `js/data/*.js` (pure data) → `js/store.js` (localStorage) → `js/ayah.js` (ayah rendering, explanation sheet, audio) → `js/app.js` (router and pages).
+- Load order in `index.html` matters: `js/data/*.js` (pure data) → `js/store.js` (localStorage) → `js/ayah.js` (ayah rendering, explanation sheet, audio) → `js/mushaf.js` (full-Quran reader, registers its pages on `T.pages`) → `js/app.js` (router and pages).
 - Routing is hash based: `#/chapter/madd#rule-madd-lazim` means route `chapter`, param `madd`, then scroll to the element with id `rule-madd-lazim`. Each route is a function in `pages` (in `app.js`) that returns an HTML string for `<main id="view">`. The full route list is at the top of `app.js`.
 - Clicks are handled by event delegation on `document` or `#view`, so pages can re-render without re-binding.
+- Pages that need data or event listeners do that in `setTimeout(..., 0)` after their HTML is in the DOM (search, settings, the mushaf pages).
 
 ### Content data
 
@@ -82,11 +89,17 @@ A quick orientation for new contributors. Every file also starts with a header c
 
 Coloured Quran text uses the markup `{ruleId|text to colour|optional why-note}` (see "ترميز الأمثلة" above). The rule's `group` picks the colour; `ayah.js` turns each group into a CSS class `g-<group>` with a `--c` colour variable for light and dark mode.
 
+### Mushaf data (`data/mushaf/`)
+
+- One JSON file per surah (`001.json` … `114.json`) plus `index.json` (surah list, juz starts, checksums). Each ayah is `{ n, t, j, w }`: `t` is the Quran text, a verbatim copy of the Tanzil Uthmani text (never edit it by hand; `npm test` checks its SHA-256); `j` lists tajweed spans `[start, end, ruleId]` into `t` (rule ids from `rules.js`, spans may overlap); `w` lists pause/sajdah/hizb marks `[offset, mark]` inserted at display time.
+- `js/mushaf.js` (`colorHtml`) merges text, spans and marks into HTML; the reader toolbar toggles colours, flow/list mode and font size; the player streams the surah ayah by ayah.
+- To regenerate the data (for example after a new source version) run `python3 -I scripts/build_mushaf.py` from the repo root. It downloads the sources into `sources/` (gitignored), verifies the Tanzil checksum, cross-checks the letters against two other editions, realigns the tajweed annotations, builds the pause-mark layer and rewrites `data/mushaf/VERIFICATION.md` (Arabic report). `REFERENCES.md` lists every source with links, checksums and licenses.
+
 ### Audio, storage, offline
 
 - Audio streams from `https://everyayah.com/data/<reciter>/<SSS><AAA>.mp3` (surah and ayah padded to 3 digits). Reciters are listed in `T.reciters` in `ayah.js`. Nothing is downloaded into the repo.
-- Progress and settings live in `localStorage` under `tajweed:progress`, `tajweed:settings` and `tajweed:theme`. The shape is documented at the top of `js/store.js`. No data leaves the device.
-- `sw.js` caches the app shell network-first, so online users always get the latest files. Add new files to its `SHELL` list if they are needed offline.
+- Progress and settings live in `localStorage` under `tajweed:progress`, `tajweed:settings`, `tajweed:mushaf` (last read position, bookmarks, reader preferences) and `tajweed:theme`. The shape is documented at the top of `js/store.js`. No data leaves the device.
+- `sw.js` caches the app shell network-first, so online users always get the latest files; surah files are cached once opened. Add new files to its `SHELL` list if they are needed offline, and bump `CACHE` when that list changes.
 
 ### Conventions
 
