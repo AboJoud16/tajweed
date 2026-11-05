@@ -1,10 +1,18 @@
 <!doctype html>
+<!--
+  موسوعة التجويد (Tajweed Encyclopedia) - single-page app, no build step.
+  Developer notes (English): see README.md "Developer guide" and REFERENCES.md.
+  Script order matters: data files first (they only attach objects to window.TAJWEED),
+  then store.js (localStorage), ayah.js (coloured-ayah rendering, explain sheet, audio),
+  mushaf.js (full Quran reader, registers its pages on TAJWEED.pages), and finally app.js
+  (router, navigation and all other pages; it renders immediately on load).
+-->
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>موسوعة التجويد</title>
-  <meta name="description" content="تعلّم أحكام تجويد القرآن الكريم برواية حفص: مسار تعليمي مرتّب، آيات ملوّنة بالأحكام، شرح عند اللمس، تلاوات صوتية، اختبارات وتدريبات.">
+  <meta name="description" content="تعلّم أحكام تجويد القرآن الكريم برواية حفص: مسار تعليمي مرتّب، المصحف كاملًا بالرسم العثماني مع تلوين الأحكام، شرح عند اللمس، تلاوات صوتية، اختبارات وتدريبات.">
   <meta name="theme-color" content="#0f6e56">
   <meta name="color-scheme" content="light dark">
   <link rel="manifest" href="manifest.webmanifest">
@@ -41,6 +49,7 @@
   <script src="js/data/glossary.js"></script>
   <script src="js/store.js"></script>
   <script src="js/ayah.js"></script>
+  <script src="js/mushaf.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

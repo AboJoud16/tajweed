@@ -1,8 +1,16 @@
+/* ============================================================================
+ * store.js - persistence in localStorage (nothing is sent to a server).
+ * Keys: "tajweed:progress" (chapters done, quiz results, practice stats, streak days),
+ *       "tajweed:settings" (reciter, fontScale), "tajweed:mushaf" (last read position,
+ *       bookmarks, colour on/off, flow/list mode). "tajweed:theme" is read in index.html.
+ * All reads are wrapped in try/catch so the app still works when storage is blocked.
+ * ========================================================================== */
 /* التخزين المحلي للتقدّم والإعدادات */
 window.TAJWEED = window.TAJWEED || {};
 TAJWEED.store = (function () {
   const KEY = 'tajweed:progress';
   const SETTINGS = 'tajweed:settings';
+  const MUSHAF = 'tajweed:mushaf';
   const def = () => ({ chapters: {}, quizzes: {}, practice: { asked: 0, correct: 0, byRule: {} }, lastChapter: null, days: [] });
   let state = null;
   function load() {
@@ -51,7 +59,10 @@ TAJWEED.store = (function () {
       });
       return max ? Math.round(100 * pts / max) : 0;
     },
-    reset() { state = def(); save(); },
+    /* تفضيلات المصحف: آخر قراءة، العلامات، التلوين، طريقة العرض */
+    mushaf() { const d = { last: null, bookmarks: [], color: true, mode: 'flow' }; try { return Object.assign(d, JSON.parse(localStorage.getItem(MUSHAF) || '{}')); } catch (e) { return d; } },
+    setMushaf(patch) { const m = api.mushaf(); Object.assign(m, patch); try { localStorage.setItem(MUSHAF, JSON.stringify(m)); } catch (e) {} return m; },
+    reset() { state = def(); save(); try { localStorage.removeItem(MUSHAF); } catch (e) {} },
   };
   return api;
 })();

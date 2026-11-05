@@ -1,3 +1,5 @@
+/* screenshots.js - optional visual check with Playwright (`npm run screenshots`): opens the main routes on
+   mobile/desktop, light/dark, saves PNGs to ./screenshots and fails on console errors. */
 /* يلتقط صورًا للتطبيق ويرصد أخطاء الكونسول. يحتاج Playwright وخادمًا على المنفذ 8080. */
 const { chromium } = require('playwright');
 const fs = require('fs');

@@ -1,3 +1,18 @@
+/* ============================================================================
+ * app.js - router, navigation and pages (home, learning path, chapter, quiz,
+ * practice, legend, glossary, search, settings).
+ *
+ * Developer notes (English):
+ * - Routing is hash based: "#/route/param?query#anchor" (see parseHash()).
+ *   render() looks up `pages[route]`, or `TAJWEED.pages[route]` for pages
+ *   registered by other modules (mushaf.js), and replaces #view's innerHTML.
+ * - Every page function returns an HTML string synchronously. Pages that need
+ *   to attach event listeners or load data do it in setTimeout(..., 0) after
+ *   the HTML is in the DOM (see pages.search, pages.settings, mushaf.js).
+ * - Shared helpers come from TAJWEED (window global): esc() escapes HTML,
+ *   ar() converts digits to Arabic-Indic, store is js/store.js.
+ * - No framework, no modules: classic scripts so the app also works from file://.
+ * ========================================================================== */
 /* موسوعة التجويد — التطبيق: التوجيه والصفحات */
 (function () {
   const T = TAJWEED, esc = T.esc, ar = T.ar, store = T.store;
@@ -12,21 +27,25 @@
     settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     palette: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2s-1-2 0-3 3 0 4-1a9 9 0 0 0-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>',
     search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    quran: '<svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M6 17h13M9 7h6M9 10.5h4"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
     next: '<svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>',
     prev: '<svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>',
   };
 
   /* ---------- التنقل ---------- */
+  // Navigation entries. `match` decides which entry is highlighted for a route;
+  // `bottom: false` keeps an entry out of the mobile bottom bar (max 5 items there).
   const NAV = [
     { href: '#/', icon: 'home', label: 'الرئيسية', match: r => r === '' },
     { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' },
+    { href: '#/mushaf', icon: 'quran', label: 'المصحف', match: r => r === 'mushaf' },
     { href: '#/practice', icon: 'practice', label: 'تدريب', match: r => r === 'practice' },
     { href: '#/legend', icon: 'palette', label: 'الألوان', match: r => r === 'legend' },
-    { href: '#/glossary', icon: 'book', label: 'المصطلحات', match: r => r === 'glossary' },
+    { href: '#/glossary', icon: 'book', label: 'المصطلحات', match: r => r === 'glossary', bottom: false },
   ];
   function renderNav(route) {
-    document.getElementById('bottomnav').innerHTML = NAV.map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('');
+    document.getElementById('bottomnav').innerHTML = NAV.filter(n => n.bottom !== false).map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('');
     const side = NAV.map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('') +
       `<a href="#/search" class="${route === 'search' ? 'active' : ''}">${I.search}<span>بحث</span></a>` +
       `<a href="#/settings" class="${route === 'settings' ? 'active' : ''}">${I.settings}<span>الإعدادات</span></a>` +
@@ -47,6 +66,7 @@
   }
 
   /* ---------- الصفحات ---------- */
+  // Page registry: route name -> function(param, query) returning HTML.
   const pages = {};
 
   pages.home = function () {
@@ -74,6 +94,8 @@
         <div class="stat"><b>${ar(avg)}٪</b><span>متوسط الاختبارات</span></div>
         <div class="stat"><b>${ar(streak)}</b><span>أيام متتالية</span></div>
       </div>
+      <div class="section-title"><h2>المصحف</h2><a href="#/mushaf">فهرس السور</a></div>
+      ${mushafCta()}
       <div class="section-title"><h2>مسار التعلّم</h2><a href="#/path">عرض الكل</a></div>
       ${pathHtml(T.chapters.slice(0, 5))}
       <div class="section-title"><h2>دليل الألوان</h2><a href="#/legend">التفاصيل</a></div>
@@ -83,6 +105,12 @@
       <p class="muted" style="font-size:.9rem">المس أي جزء ملوّن لتعرف الحكم وسببه.</p>`;
   };
 
+  // Home-page card linking to the mushaf (continues from the last read position when there is one).
+  function mushafCta() {
+    const m = store.mushaf(); const last = m.last;
+    const href = last ? `#/mushaf/${last.s}?ayah=${last.a}` : '#/mushaf/1';
+    return `<a class="mushaf-cta" href="${href}"><span class="mark">۞</span><span><b>${last ? `تابع القراءة: ${esc(last.name)} ﴿${ar(last.a)}﴾` : 'اقرأ المصحف كاملًا'}</b><span class="muted">القرآن الكريم بالرسم العثماني مع تلوين أحكام التجويد وتلاوة متواصلة.</span></span>${I.next}</a>`;
+  }
   function dailyAyah() {
     const all = []; T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(e => { if (e.ref && (e.text.match(/\{/g) || []).length >= 2) all.push(e); })));
     const d = Math.floor(Date.now() / 864e5); return all[d % all.length];
@@ -179,6 +207,7 @@
   }
 
   /* ---------- الاختبار ---------- */
+  // Quiz flow: pages.quiz() sets quizState and renders a placeholder; renderQuiz() draws one question at a time.
   pages.quiz = function (id) {
     const c = T.chapterById[id]; const qs = T.quizzes[id];
     if (!c || !qs) return `<div class="empty">لا يوجد اختبار لهذا الباب.</div>`;
@@ -218,6 +247,7 @@
   }
 
   /* ---------- التدريب: تعرّف على الحكم ---------- */
+  // Practice mode: picks a marked span from any chapter example and asks which rule it is.
   function practicePool(filter) {
     const pool = [];
     T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(ex => {
@@ -281,6 +311,7 @@
   };
 
   /* ---------- البحث ---------- */
+  // Search normalisation: strip harakat, unify alif/hamzah forms, taa marbutah and alif maqsurah.
   const norm = s => String(s).replace(/[ً-ْٰۖ-ۭٓ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/<[^>]+>/g, '').toLowerCase();
   function searchIndex() {
     if (searchIndex.cache) return searchIndex.cache;
@@ -324,6 +355,7 @@
 
   function setTheme(t) { if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); try { localStorage.removeItem('tajweed:theme'); } catch (e) {} } else { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem('tajweed:theme', t); } catch (e) {} } }
   function applyFont() { document.documentElement.style.setProperty('--quran-size', (1.9 * (store.settings().fontScale || 1)).toFixed(2) + 'rem'); }
+  T.applyFont = applyFont;
   document.getElementById('theme-toggle').addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(cur === 'dark' ? 'light' : 'dark');
@@ -338,6 +370,7 @@
   view.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && (e.target.classList.contains('zone') || e.target.classList.contains('rule-tag'))) { e.preventDefault(); e.target.click(); } });
 
   /* ---------- التوجيه ---------- */
+  // Splits location.hash into route, first path param, URLSearchParams and in-page anchor.
   function parseHash() {
     const h = location.hash.replace(/^#\/?/, '');
     const [pathAndQuery, anchor] = h.split('#');
@@ -345,9 +378,10 @@
     const parts = path.split('/').filter(Boolean);
     return { route: parts[0] || '', param: parts[1] ? decodeURIComponent(parts[1]) : '', query: new URLSearchParams(qs || ''), anchor };
   }
+  // Re-renders the whole view on every hash change (closes the sheet, stops snippet audio).
   function render() {
     const { route, param, query, anchor } = parseHash();
-    const page = pages[route === '' ? 'home' : route];
+    const page = pages[route === '' ? 'home' : route] || (T.pages && T.pages[route]);
     T.closeSheet(); T.stopAudio();
     view.innerHTML = page ? page(param, query) : `<div class="empty">الصفحة غير موجودة. <a href="#/">العودة إلى الرئيسية</a></div>`;
     renderNav(route);

@@ -1,3 +1,5 @@
+/* quizzes.js - one array of questions per chapter id: { q, options: [...], answer: index, why }.
+   A chapter is marked complete automatically when a quiz scores 80% or more. */
 /* اختبارات الأبواب: سؤال، خيارات، رقم الإجابة الصحيحة (يبدأ من 0)، وتعليل. */
 window.TAJWEED = window.TAJWEED || {};
 

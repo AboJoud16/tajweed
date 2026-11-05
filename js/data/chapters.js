@@ -1,3 +1,7 @@
+/* chapters.js - the learning path content (13 chapters). Each chapter: { id, order, title, subtitle, level,
+   minutes, icon, intro, diagram?, sections: [{ title, rules?, body?, examples?, tips? }], summary }.
+   Examples use the markup {rule-id|text|note} (see js/ayah.js) and carry ref: [surah, ayah, surahName]
+   so the audio button can build the everyayah.com URL. Validate with `npm test`. */
 /* الأبواب — مسار التعلّم. النص القرآني برواية حفص عن عاصم.
    ترميز الأمثلة: {معرّف الحكم|النص الملوّن|ملاحظة اختيارية}. */
 window.TAJWEED = window.TAJWEED || {};
