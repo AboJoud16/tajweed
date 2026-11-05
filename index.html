@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>موسوعة التجويد</title>
+  <meta name="description" content="تعلّم أحكام تجويد القرآن الكريم برواية حفص: مسار تعليمي مرتّب، آيات ملوّنة بالأحكام، شرح عند اللمس، تلاوات صوتية، اختبارات وتدريبات.">
+  <meta name="theme-color" content="#0f6e56">
+  <meta name="color-scheme" content="light dark">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    /* تطبيق السمة قبل الرسم لتجنّب الوميض */
+    try { var t = localStorage.getItem('tajweed:theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#/" aria-label="الرئيسية"><span class="mark">۞</span><span>موسوعة التجويد</span></a>
+      <span class="spacer"></span>
+      <a class="icon-btn" href="#/search" aria-label="بحث" title="بحث"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></a>
+      <button class="icon-btn" id="theme-toggle" aria-label="تبديل الوضع الليلي" title="الوضع الليلي"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    </header>
+    <div class="shell">
+      <nav class="sidenav" id="sidenav" aria-label="التنقل"></nav>
+      <main id="view" aria-live="polite"></main>
+    </div>
+    <nav class="bottomnav" id="bottomnav" aria-label="التنقل السفلي"></nav>
+  </div>
+
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+
+  <script src="js/data/rules.js"></script>
+  <script src="js/data/chapters.js"></script>
+  <script src="js/data/quizzes.js"></script>
+  <script src="js/data/glossary.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ayah.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
