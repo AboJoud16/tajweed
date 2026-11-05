@@ -1,10 +1,3 @@
-/* ============================================================================
- * store.js - persistence in localStorage (nothing is sent to a server).
- * Keys: "tajweed:progress" (chapters done, quiz results, practice stats, streak days),
- *       "tajweed:settings" (reciter, fontScale), "tajweed:mushaf" (last read position,
- *       bookmarks, colour on/off, flow/list mode). "tajweed:theme" is read in index.html.
- * All reads are wrapped in try/catch so the app still works when storage is blocked.
- * ========================================================================== */
 /* التخزين المحلي للتقدّم والإعدادات */
 window.TAJWEED = window.TAJWEED || {};
 TAJWEED.store = (function () {

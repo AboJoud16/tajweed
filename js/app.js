@@ -1,18 +1,3 @@
-/* ============================================================================
- * app.js - router, navigation and pages (home, learning path, chapter, quiz,
- * practice, legend, glossary, search, settings).
- *
- * Developer notes (English):
- * - Routing is hash based: "#/route/param?query#anchor" (see parseHash()).
- *   render() looks up `pages[route]`, or `TAJWEED.pages[route]` for pages
- *   registered by other modules (mushaf.js), and replaces #view's innerHTML.
- * - Every page function returns an HTML string synchronously. Pages that need
- *   to attach event listeners or load data do it in setTimeout(..., 0) after
- *   the HTML is in the DOM (see pages.search, pages.settings, mushaf.js).
- * - Shared helpers come from TAJWEED (window global): esc() escapes HTML,
- *   ar() converts digits to Arabic-Indic, store is js/store.js.
- * - No framework, no modules: classic scripts so the app also works from file://.
- * ========================================================================== */
 /* موسوعة التجويد — التطبيق: التوجيه والصفحات */
 (function () {
   const T = TAJWEED, esc = T.esc, ar = T.ar, store = T.store;
@@ -34,8 +19,6 @@
   };
 
   /* ---------- التنقل ---------- */
-  // Navigation entries. `match` decides which entry is highlighted for a route;
-  // `bottom: false` keeps an entry out of the mobile bottom bar (max 5 items there).
   const NAV = [
     { href: '#/', icon: 'home', label: 'الرئيسية', match: r => r === '' },
     { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' },
@@ -66,7 +49,6 @@
   }
 
   /* ---------- الصفحات ---------- */
-  // Page registry: route name -> function(param, query) returning HTML.
   const pages = {};
 
   pages.home = function () {
@@ -207,7 +189,6 @@
   }
 
   /* ---------- الاختبار ---------- */
-  // Quiz flow: pages.quiz() sets quizState and renders a placeholder; renderQuiz() draws one question at a time.
   pages.quiz = function (id) {
     const c = T.chapterById[id]; const qs = T.quizzes[id];
     if (!c || !qs) return `<div class="empty">لا يوجد اختبار لهذا الباب.</div>`;
@@ -247,7 +228,6 @@
   }
 
   /* ---------- التدريب: تعرّف على الحكم ---------- */
-  // Practice mode: picks a marked span from any chapter example and asks which rule it is.
   function practicePool(filter) {
     const pool = [];
     T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(ex => {
@@ -311,7 +291,6 @@
   };
 
   /* ---------- البحث ---------- */
-  // Search normalisation: strip harakat, unify alif/hamzah forms, taa marbutah and alif maqsurah.
   const norm = s => String(s).replace(/[ً-ْٰۖ-ۭٓ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/<[^>]+>/g, '').toLowerCase();
   function searchIndex() {
     if (searchIndex.cache) return searchIndex.cache;
@@ -370,7 +349,6 @@
   view.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && (e.target.classList.contains('zone') || e.target.classList.contains('rule-tag'))) { e.preventDefault(); e.target.click(); } });
 
   /* ---------- التوجيه ---------- */
-  // Splits location.hash into route, first path param, URLSearchParams and in-page anchor.
   function parseHash() {
     const h = location.hash.replace(/^#\/?/, '');
     const [pathAndQuery, anchor] = h.split('#');
@@ -378,7 +356,6 @@
     const parts = path.split('/').filter(Boolean);
     return { route: parts[0] || '', param: parts[1] ? decodeURIComponent(parts[1]) : '', query: new URLSearchParams(qs || ''), anchor };
   }
-  // Re-renders the whole view on every hash change (closes the sheet, stops snippet audio).
   function render() {
     const { route, param, query, anchor } = parseHash();
     const page = pages[route === '' ? 'home' : route] || (T.pages && T.pages[route]);

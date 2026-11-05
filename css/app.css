@@ -1,6 +1,3 @@
-/* app.css - all styling. Theme colours are CSS variables on :root (light) overridden for dark mode both by
-   [data-theme="dark"] (user choice) and prefers-color-scheme (system). Section order: variables, base,
-   layout (topbar, sidenav >= 900px, bottom nav < 900px), components, pages, mushaf reader, player. */
 /* موسوعة التجويد — التصميم */
 :root {
   --bg: #f6f1e7;

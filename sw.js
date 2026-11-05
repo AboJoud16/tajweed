@@ -1,6 +1,3 @@
-/* sw.js - service worker. Pre-caches the app shell on install; for every same-origin request it tries the
-   network first and falls back to the cache (so surah JSON files visited once keep working offline).
-   Bump CACHE whenever the shell file list changes so old caches are dropped on activate. */
 /* عامل الخدمة: يخزّن ملفات التطبيق للعمل دون اتصال، وسور المصحف بعد أول زيارة لها. التلاوات تُحمَّل من الشبكة دائمًا. */
 const CACHE = 'tajweed-v2';
 const SHELL = [

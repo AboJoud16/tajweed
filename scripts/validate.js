@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/* validate.js - data integrity checks, run with `npm test` (no network needed).
-   Checks the lesson data (rule ids, chapter ids, example references, quiz answers) and the mushaf data
-   (114 files, 6,236 ayat, span bounds and rule ids, pause-mark positions and counts, and the SHA-256 of the
-   reconstructed Tanzil lines, so the Quran text cannot be edited by hand without the test failing). */
 /* يتحقق من سلامة بيانات التطبيق: معرّفات الأحكام في الأمثلة، مراجع الآيات، الاختبارات، وملفات المصحف (العدد، الحدود، بصمة النص). */
 const fs = require('fs');
 const path = require('path');

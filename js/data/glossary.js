@@ -1,4 +1,3 @@
-/* glossary.js - short term definitions shown on #/glossary and indexed by search. */
 /* المصطلحات */
 window.TAJWEED = window.TAJWEED || {};
 TAJWEED.glossary = [

@@ -1,13 +1,3 @@
-/* ============================================================================
- * ayah.js - everything about showing a coloured ayah:
- *   - injects one CSS variable (--c) per colour group, for light and dark themes
- *   - parses the example markup "{rule-id|highlighted text|optional note}"
- *     used in js/data/chapters.js and renders it as <span class="tj g-<group>">
- *   - the bottom "explain" sheet (TAJWEED.explain) opened when a span is tapped
- *   - per-ayah audio snippets streamed from everyayah.com (TAJWEED.audioUrl)
- * Exposed on window.TAJWEED: esc, ar, parseMarkup, stripMarkup, ayahHtml,
- * reciters, audioUrl, audioHtml, stopAudio, explain, openSheet, closeSheet.
- * ========================================================================== */
 /* عرض الآيات الملوّنة، بطاقة الشرح عند اللمس، والتلاوة الصوتية */
 window.TAJWEED = window.TAJWEED || {};
 (function () {
@@ -25,7 +15,6 @@ window.TAJWEED = window.TAJWEED || {};
     document.head.appendChild(style);
   })();
 
-  // Example markup: {rule-id|text|note}. Rule ids must exist in js/data/rules.js (checked by npm test).
   const MARK = /\{([a-z0-9-]+)\|([^{}|]+)(?:\|([^{}]*))?\}/g;
 
   /* يحوّل نص المثال إلى مقاطع */
@@ -52,8 +41,6 @@ window.TAJWEED = window.TAJWEED || {};
   }
 
   /* HTML لبطاقة آية */
-  // Renders one example card. ex = { text, ref: [surah, ayah, surahName], note }.
-  // opts.plain hides colours (practice mode), opts.targetIndex highlights one segment, opts.noAudio hides the play button.
   T.ayahHtml = function (ex, opts) {
     opts = opts || {};
     const segs = parse(ex.text);
@@ -71,7 +58,6 @@ window.TAJWEED = window.TAJWEED || {};
   T.ar = toArabicDigits;
 
   /* ---------- الصوت ---------- */
-  // Reciter folder names as used by everyayah.com; the id is part of the MP3 URL.
   T.reciters = [
     { id: 'Husary_128kbps', name: 'محمود خليل الحصري (مرتّل)' },
     { id: 'Husary_Muallim_128kbps', name: 'الحصري (المصحف المعلّم)' },
@@ -118,8 +104,6 @@ window.TAJWEED = window.TAJWEED || {};
   backdrop.addEventListener('click', closeSheet);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
-  // Opens the explanation sheet for a rule. `text` is the sample shown in the rule colour, `note` the "why here" line,
-  // `span` the tapped element (kept highlighted while the sheet is open).
   T.explain = function (ruleId, text, note, span) {
     const r = T.ruleById[ruleId]; if (!r) return;
     const ch = T.chapterById[r.chapter];

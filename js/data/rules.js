@@ -1,7 +1,3 @@
-/* rules.js - the catalogue of tajweed rules and the 12 colour groups.
-   Each rule: { id, chapter, group, name, letters?, short, detail, how? }. `id` is referenced by the
-   example markup in chapters.js and by data/mushaf/*.json spans; `group` picks the colour (TAJWEED.groups).
-   Adding a rule: add it here, then run `npm test`. */
 /* الأحكام (rules) — المرجع الذي تعتمد عليه الأمثلة الملوّنة والبطاقات والتدريب.
    كل حكم: id، الاسم، المجموعة اللونية (group)، الباب (chapter)، تعريف قصير، تفصيل، وكيفية الأداء. */
 window.TAJWEED = window.TAJWEED || {};
