@@ -1,0 +1,363 @@
+/* موسوعة التجويد — التطبيق: التوجيه والصفحات */
+(function () {
+  const T = TAJWEED, esc = T.esc, ar = T.ar, store = T.store;
+  const view = document.getElementById('view');
+
+  /* ---------- أيقونات ---------- */
+  const I = {
+    home: '<svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>',
+    path: '<svg viewBox="0 0 24 24"><path d="M4 6h8a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8h12"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="22" r="1.5"/></svg>',
+    practice: '<svg viewBox="0 0 24 24"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
+    book: '<svg viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/></svg>',
+    settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    palette: '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2s-1-2 0-3 3 0 4-1a9 9 0 0 0-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
+    next: '<svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>',
+    prev: '<svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>',
+  };
+
+  /* ---------- التنقل ---------- */
+  const NAV = [
+    { href: '#/', icon: 'home', label: 'الرئيسية', match: r => r === '' },
+    { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' },
+    { href: '#/practice', icon: 'practice', label: 'تدريب', match: r => r === 'practice' },
+    { href: '#/legend', icon: 'palette', label: 'الألوان', match: r => r === 'legend' },
+    { href: '#/glossary', icon: 'book', label: 'المصطلحات', match: r => r === 'glossary' },
+  ];
+  function renderNav(route) {
+    document.getElementById('bottomnav').innerHTML = NAV.map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('');
+    const side = NAV.map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('') +
+      `<a href="#/search" class="${route === 'search' ? 'active' : ''}">${I.search}<span>بحث</span></a>` +
+      `<a href="#/settings" class="${route === 'settings' ? 'active' : ''}">${I.settings}<span>الإعدادات</span></a>` +
+      `<div class="group">الأبواب</div>` +
+      T.chapters.map(c => `<a class="chap ${store.chapterDone(c.id) ? 'done' : ''} ${location.hash.startsWith('#/chapter/' + c.id) ? 'active' : ''}" href="#/chapter/${c.id}"><span class="n">${store.chapterDone(c.id) ? '✓' : ar(c.order)}</span><span>${esc(c.title)}</span></a>`).join('');
+    document.getElementById('sidenav').innerHTML = side;
+  }
+
+  /* ---------- أدوات ---------- */
+  function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+  function ring(pct, size) { const r = 32, c = 2 * Math.PI * r; return `<div class="ring" style="${size ? `width:${size}px;height:${size}px` : ''}"><svg viewBox="0 0 76 76"><circle class="track" cx="38" cy="38" r="${r}"/><circle class="bar" cx="38" cy="38" r="${r}" stroke-dasharray="${c * pct / 100} ${c}"/></svg><div class="val">${ar(pct)}٪</div></div>`; }
+  function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function nextChapter() { return T.chapters.find(c => !store.chapterDone(c.id)) || null; }
+  function continueChapter() { const s = store.get(); if (s.lastChapter && !store.chapterDone(s.lastChapter)) return T.chapterById[s.lastChapter]; return nextChapter(); }
+  function chapterStatus(c) {
+    const done = store.chapterDone(c.id); const best = store.quizBest(c.id); const total = (T.quizzes[c.id] || []).length;
+    return { done, best, total, visited: !!store.get().chapters[c.id]?.visited };
+  }
+
+  /* ---------- الصفحات ---------- */
+  const pages = {};
+
+  pages.home = function () {
+    const pct = store.overall(); const cont = continueChapter(); const s = store.get();
+    const doneCount = T.chapters.filter(c => store.chapterDone(c.id)).length;
+    const quizzes = Object.values(s.quizzes); const avg = quizzes.length ? Math.round(100 * quizzes.reduce((n, q) => n + q.best / q.total, 0) / quizzes.length) : 0;
+    const streak = store.streak();
+    return `
+      <section class="hero fade-in">
+        <div class="row between">
+          <div>
+            <div class="eyebrow" style="color:rgba(255,255,255,.75)">برواية حفص عن عاصم</div>
+            <h1>تعلّم التجويد خطوة خطوة</h1>
+          </div>
+          ${ring(pct)}
+        </div>
+        <p>مسار مرتّب من المخارج إلى الوقف والابتداء، آيات ملوّنة بالأحكام تشرح نفسها عند اللمس، تلاوات بصوت القرّاء، واختبارات تثبّت ما تعلّمته.</p>
+        <div class="row">
+          ${cont ? `<a class="btn" href="#/chapter/${cont.id}">${s.lastChapter ? 'تابع:' : 'ابدأ:'} ${esc(cont.title)}</a>` : `<a class="btn" href="#/practice">أتممت المسار! تدرّب</a>`}
+          <a class="btn ghost" href="#/practice">تدريب سريع</a>
+        </div>
+      </section>
+      <div class="stats">
+        <div class="stat"><b>${ar(doneCount)}<span style="font-size:.9rem;color:var(--muted)">/${ar(T.chapters.length)}</span></b><span>أبواب أتممتها</span></div>
+        <div class="stat"><b>${ar(avg)}٪</b><span>متوسط الاختبارات</span></div>
+        <div class="stat"><b>${ar(streak)}</b><span>أيام متتالية</span></div>
+      </div>
+      <div class="section-title"><h2>مسار التعلّم</h2><a href="#/path">عرض الكل</a></div>
+      ${pathHtml(T.chapters.slice(0, 5))}
+      <div class="section-title"><h2>دليل الألوان</h2><a href="#/legend">التفاصيل</a></div>
+      <div class="legend">${Object.entries(T.groups).slice(0, 6).map(([g, v]) => `<div class="legend-item g-${g}"><i></i><span>${esc(v.name)}</span></div>`).join('')}</div>
+      <div class="section-title"><h2>آية اليوم</h2></div>
+      ${T.ayahHtml(dailyAyah())}
+      <p class="muted" style="font-size:.9rem">المس أي جزء ملوّن لتعرف الحكم وسببه.</p>`;
+  };
+
+  function dailyAyah() {
+    const all = []; T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(e => { if (e.ref && (e.text.match(/\{/g) || []).length >= 2) all.push(e); })));
+    const d = Math.floor(Date.now() / 864e5); return all[d % all.length];
+  }
+
+  function pathHtml(chapters) {
+    const cont = continueChapter();
+    return `<div class="path">${chapters.map(c => {
+      const st = chapterStatus(c);
+      const cls = st.done ? 'done' : (cont && cont.id === c.id ? 'current' : '');
+      return `<a class="path-item ${cls}" href="#/chapter/${c.id}">
+        <span class="icon">${st.done ? '✓' : esc(c.icon)}</span>
+        <span><span class="t">${esc(c.title)}</span><br><span class="s">${esc(c.subtitle)}</span></span>
+        <span class="meta"><span class="chip">${esc(c.level)}</span><span>${st.best !== null ? `اختبار ${ar(st.best)}/${ar(st.total)}` : `${ar(c.minutes)} د`}</span></span>
+      </a>`; }).join('')}</div>`;
+  }
+
+  pages.path = function () {
+    const pct = store.overall();
+    return `<div class="row between" style="margin-bottom:14px"><div><h1>مسار التعلّم</h1><p class="muted" style="margin:0">${ar(T.chapters.length)} بابًا مرتّبة من الأساس إلى الأداء. أتمم الباب ثم اختبر نفسك.</p></div>${ring(pct)}</div>${pathHtml(T.chapters)}`;
+  };
+
+  pages.chapter = function (id) {
+    const c = T.chapterById[id]; if (!c) return `<div class="empty">الباب غير موجود.</div>`;
+    store.visitChapter(id);
+    const st = chapterStatus(c);
+    const i = T.chapters.indexOf(c); const prev = T.chapters[i - 1], next = T.chapters[i + 1];
+    const sections = c.sections.map((s, si) => `
+      <section class="section card" id="s${si}">
+        <h2>${esc(s.title)}</h2>
+        ${s.rules ? `<div class="rule-tags">${s.rules.map(rid => { const r = T.ruleById[rid]; return `<span class="rule-tag g-${r.group}" id="rule-${rid}" data-rule="${rid}" role="button" tabindex="0"><i></i>${esc(r.name)}</span>`; }).join('')}</div>` : ''}
+        <div class="body">${s.body || ''}</div>
+        ${(s.examples || []).map(e => T.ayahHtml(e)).join('')}
+        ${s.tips ? `<div class="tips"><b>تنبيهات</b><ul>${s.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
+      </section>`).join('');
+    return `
+      <div class="chapter-head fade-in">
+        <div class="icon">${esc(c.icon)}</div>
+        <div>
+          <div class="eyebrow">الباب ${ar(c.order)} من ${ar(T.chapters.length)}، ${esc(c.level)}، نحو ${ar(c.minutes)} دقيقة</div>
+          <h1>${esc(c.title)}</h1>
+          <div class="muted">${esc(c.subtitle)}</div>
+        </div>
+      </div>
+      <div class="chapter-intro">${esc(c.intro)}</div>
+      ${c.diagram === 'makharij' ? makharijDiagram() : ''}
+      ${sections}
+      <section class="summary card"><h2>خلاصة الباب</h2><ol>${c.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ol></section>
+      <div class="chapter-actions">
+        <a class="btn primary block" href="#/quiz/${c.id}">${I.practice} ${st.best !== null ? `أعد الاختبار (أفضل نتيجة ${ar(st.best)}/${ar(st.total)})` : 'اختبر نفسك في هذا الباب'}</a>
+        <button class="btn block" id="mark-done" type="button">${I.check} ${st.done ? 'تم إتمام الباب ✓ (إلغاء)' : 'أتممتُ هذا الباب'}</button>
+      </div>
+      <div class="chapter-nav">
+        ${prev ? `<a class="btn ghost" href="#/chapter/${prev.id}">${I.prev} ${esc(prev.title)}</a>` : '<span></span>'}
+        ${next ? `<a class="btn ghost" href="#/chapter/${next.id}">${esc(next.title)} ${I.next}</a>` : ''}
+      </div>`;
+  };
+
+  function makharijDiagram() {
+    const Z = [
+      ['khayshum', 200, 52, 'الخيشوم', 'الغنّة', 'أعلى الأنف: منه تخرج الغنّة المصاحبة للنون والميم.'],
+      ['jawf', 235, 122, 'الجوف', 'ا و ي', 'الخلاء الداخل في الفم والحلق: حروف المدّ الثلاثة.'],
+      ['halq1', 348, 285, 'أقصى الحلق', 'ء هـ', 'أبعد الحلق عن الفم: الهمزة والهاء.'],
+      ['halq2', 346, 235, 'وسط الحلق', 'ع ح', 'وسط الحلق: العين والحاء.'],
+      ['halq3', 341, 185, 'أدنى الحلق', 'غ خ', 'أقرب الحلق إلى الفم: الغين والخاء.'],
+      ['qaf', 305, 130, 'أقصى اللسان', 'ق', 'أقصى اللسان مع ما يحاذيه من الحنك الأعلى (اللهاة).'],
+      ['kaf', 268, 108, 'أقصى اللسان (أسفل)', 'ك', 'أسفل مخرج القاف قليلًا.'],
+      ['wasat', 185, 95, 'وسط اللسان', 'ج ش ي', 'وسط اللسان مع ما يحاذيه من الحنك الأعلى.'],
+      ['dad', 172, 152, 'حافة اللسان', 'ض', 'إحدى حافتي اللسان أو كلتاهما مع ما يحاذيها من الأضراس العليا.'],
+      ['lam', 140, 108, 'أدنى الحافة', 'ل', 'أدنى حافة اللسان إلى منتهى طرفه مع لثة الأسنان العليا.'],
+      ['noon', 132, 145, 'طرف اللسان', 'ن', 'طرف اللسان مع لثة الثنيتين العليين، تحت مخرج اللام قليلًا.'],
+      ['ra', 120, 182, 'طرف اللسان (ظهره)', 'ر', 'طرف اللسان مع ظهره، قريبًا من مخرج النون.'],
+      ['nit', 95, 118, 'أصول الثنايا', 'ط د ت', 'طرف اللسان مع أصول الثنايا العليا.'],
+      ['lith', 72, 150, 'أطراف الثنايا', 'ظ ذ ث', 'طرف اللسان مع أطراف الثنايا العليا.'],
+      ['safir', 80, 185, 'بين الثنايا', 'ص ز س', 'طرف اللسان مع ما بين الثنايا، فويق الثنايا السفلى.'],
+      ['shafatan', 40, 165, 'الشفتان', 'ب م و', 'الشفتان معًا: الباء والميم بانطباقهما، والواو بانفتاحهما مع استدارة.'],
+      ['fa', 52, 212, 'الشفة السفلى', 'ف', 'باطن الشفة السفلى مع أطراف الثنايا العليا.'],
+    ];
+    const zones = Z.map(z => `<g class="zone" data-id="${z[0]}" tabindex="0" role="button" aria-label="${esc(z[3])}"><circle cx="${z[1]}" cy="${z[2]}" r="17"/><text x="${z[1]}" y="${z[2]}" style="font-size:${z[4].length > 3 ? 11 : 15}px">${esc(z[4])}</text></g>`).join('');
+    const data = JSON.stringify(Object.fromEntries(Z.map(z => [z[0], { name: z[3], letters: z[4], desc: z[5] }])));
+    return `<div class="card diagram" id="diagram" data-zones='${esc(data)}'>
+      <div class="eyebrow">مخطط تقريبي لجهاز النطق من الجانب (الشفتان إلى اليسار والحلق إلى اليمين). المس أي نقطة لمعرفة مخرجها.</div>
+      <svg viewBox="15 25 375 300" aria-label="مخارج الحروف">
+        <path class="outline" d="M85 95 C 130 40, 240 35, 300 60 L 330 60 L 378 310" stroke-dasharray="7 7"/>
+        <path class="outline" d="M80 100 C 130 70, 220 70, 290 85 C 320 92, 332 105, 326 128"/>
+        <path class="outline" d="M326 128 C 318 180, 314 250, 322 312"/>
+        <path class="outline" d="M80 100 C 58 108, 52 132, 68 150 M 66 180 C 46 190, 50 220, 84 222 M 84 222 C 170 226, 260 222, 322 312"/>
+        <path class="outline" d="M86 118 L 86 150 M 86 186 L 86 206" stroke-width="4"/>
+        <path class="tongue" d="M90 206 C 100 150, 160 125, 230 132 C 280 136, 312 150, 318 182 C 300 208, 200 214, 90 206 Z"/>
+        ${zones}
+      </svg>
+      <div class="diagram-info" id="diagram-info"><span class="muted">اختر مخرجًا من الرسم…</span></div>
+    </div>`;
+  }
+
+  /* ---------- الاختبار ---------- */
+  pages.quiz = function (id) {
+    const c = T.chapterById[id]; const qs = T.quizzes[id];
+    if (!c || !qs) return `<div class="empty">لا يوجد اختبار لهذا الباب.</div>`;
+    quizState = { id, qs: shuffle(qs), i: 0, results: [], answered: false };
+    setTimeout(renderQuiz, 0);
+    return `<div id="quiz"></div>`;
+  };
+  let quizState = null;
+  function renderQuiz() {
+    const el = document.getElementById('quiz'); if (!el || !quizState) return;
+    const { qs, i, results } = quizState; const c = T.chapterById[quizState.id];
+    if (i >= qs.length) {
+      const score = results.filter(Boolean).length; store.recordQuiz(quizState.id, score, qs.length);
+      const pct = score / qs.length; const badge = pct === 1 ? '🏆' : pct >= .8 ? '🌟' : pct >= .6 ? '👍' : '📖';
+      const msg = pct === 1 ? 'ممتاز! أتقنت هذا الباب.' : pct >= .8 ? 'أحسنت، راجع ما أخطأت فيه.' : pct >= .6 ? 'جيد، يحتاج إلى مراجعة.' : 'راجع الباب ثم أعد الاختبار.';
+      if (pct >= .8 && !store.chapterDone(quizState.id)) store.setChapterDone(quizState.id, true);
+      el.innerHTML = `<div class="card result fade-in"><div class="badge">${badge}</div><div class="score">${ar(score)} / ${ar(qs.length)}</div><p>${msg}</p>
+        ${pct >= .8 ? '<p class="chip ok">تم تسجيل الباب مكتملًا</p>' : ''}
+        <div class="row" style="justify-content:center;margin-top:14px"><a class="btn primary" href="#/quiz/${quizState.id}" onclick="location.reload()">أعد الاختبار</a><a class="btn" href="#/chapter/${quizState.id}">العودة إلى الباب</a>${nextAfter(quizState.id)}</div></div>`;
+      renderNav('path'); return;
+    }
+    const q = qs[i];
+    el.innerHTML = `<div class="row between"><div><div class="eyebrow">اختبار الباب</div><h1 style="font-size:1.4rem">${esc(c.title)}</h1></div><span class="chip">${ar(i + 1)} / ${ar(qs.length)}</span></div>
+      <div class="quiz-progress">${qs.map((_, k) => `<i class="${k < i ? (results[k] ? 'ok' : 'bad') : k === i ? 'cur' : ''}"></i>`).join('')}</div>
+      <div class="card fade-in"><div class="question">${esc(q.q)}</div>
+        <div class="options">${q.options.map((o, k) => `<button class="option" type="button" data-k="${k}"><span class="k">${'أبجد'[k]}</span><span>${esc(o)}</span></button>`).join('')}</div>
+        <div id="fb"></div></div>`;
+    el.querySelectorAll('.option').forEach(b => b.addEventListener('click', () => answer(+b.dataset.k)));
+  }
+  function nextAfter(id) { const i = T.chapters.findIndex(c => c.id === id); const n = T.chapters[i + 1]; return n ? `<a class="btn" href="#/chapter/${n.id}">الباب التالي: ${esc(n.title)}</a>` : ''; }
+  function answer(k) {
+    if (quizState.answered) return; quizState.answered = true;
+    const q = quizState.qs[quizState.i]; const ok = k === q.answer; quizState.results.push(ok);
+    document.querySelectorAll('.option').forEach(b => { b.disabled = true; const kk = +b.dataset.k; if (kk === q.answer) b.classList.add('correct'); else if (kk === k) b.classList.add('wrong'); });
+    document.getElementById('fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'bad'}"><b>${ok ? 'صحيح ✓' : 'غير صحيح ✗'}</b> — ${esc(q.why)}<div style="margin-top:10px"><button class="btn primary small" id="next-q" type="button">${quizState.i + 1 < quizState.qs.length ? 'السؤال التالي' : 'النتيجة'}</button></div></div>`;
+    document.getElementById('next-q').addEventListener('click', () => { quizState.i++; quizState.answered = false; renderQuiz(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  }
+
+  /* ---------- التدريب: تعرّف على الحكم ---------- */
+  function practicePool(filter) {
+    const pool = [];
+    T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(ex => {
+      const segs = T.parseMarkup(ex.text);
+      segs.forEach((seg, idx) => {
+        if (!seg.rule) return; const r = T.ruleById[seg.rule]; if (!r) return;
+        if (filter.rule && seg.rule !== filter.rule) return;
+        if (filter.chapter && r.chapter !== filter.chapter) return;
+        pool.push({ ex, idx, rule: r, text: seg.t, note: seg.note });
+      });
+    })));
+    return pool;
+  }
+  let practice = null;
+  pages.practice = function (_, query) {
+    const filter = { rule: query.get('rule') || '', chapter: query.get('chapter') || '' };
+    practice = { filter, asked: 0, correct: 0, last: null };
+    setTimeout(nextPractice, 0);
+    const title = filter.rule ? T.ruleById[filter.rule]?.name : filter.chapter ? T.chapterById[filter.chapter]?.title : 'جميع الأبواب';
+    return `<div class="row between"><div><div class="eyebrow">تدريب: تعرّف على الحكم</div><h1 style="font-size:1.5rem">${esc(title || 'تدريب')}</h1></div><span class="chip" id="p-score">٠ / ٠</span></div>
+      <div class="row" style="margin:10px 0 14px"><select id="p-chapter" class="btn small" aria-label="اختر الباب"><option value="">كل الأبواب</option>${T.chapters.filter(c => c.sections.some(s => s.rules)).map(c => `<option value="${c.id}" ${filter.chapter === c.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select>${filter.rule ? `<a class="btn small ghost" href="#/practice">إلغاء تصفية الحكم</a>` : ''}</div>
+      <div id="p-body"></div>`;
+  };
+  function nextPractice() {
+    const el = document.getElementById('p-body'); if (!el || !practice) return;
+    const sel = document.getElementById('p-chapter'); if (sel && !sel.dataset.bound) { sel.dataset.bound = 1; sel.addEventListener('change', () => { location.hash = '#/practice' + (sel.value ? '?chapter=' + sel.value : ''); }); }
+    const pool = practicePool(practice.filter).filter(p => !['silent', 'hamzat-qat'].includes(p.rule.id));
+    if (!pool.length) { el.innerHTML = '<div class="empty">لا توجد أمثلة لهذا التصفية.</div>'; return; }
+    let item = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length > 1 && practice.last && item.text === practice.last) item = pool[(pool.indexOf(item) + 1) % pool.length];
+    practice.last = item.text;
+    const sameChapter = T.rules.filter(r => r.chapter === item.rule.chapter && r.id !== item.rule.id);
+    const others = T.rules.filter(r => r.chapter !== item.rule.chapter && !['silent', 'hamzat-qat', 'hamzat-wasl'].includes(r.id));
+    const distract = shuffle(sameChapter).slice(0, 3); while (distract.length < 3) { const o = shuffle(others).find(r => !distract.includes(r)); if (!o) break; distract.push(o); }
+    const options = shuffle([item.rule, ...distract]);
+    el.innerHTML = `<div class="card fade-in"><div class="question">ما الحكم في الجزء المظلّل؟</div>
+      ${T.ayahHtml({ text: item.ex.text, ref: item.ex.ref }, { plain: true, targetIndex: item.idx, hideNote: true })}
+      <div class="options">${options.map((r, k) => `<button class="option" type="button" data-r="${r.id}"><span class="k">${'أبجد'[k]}</span><span>${esc(r.name)}</span></button>`).join('')}</div>
+      <div id="p-fb"></div></div>`;
+    el.querySelectorAll('.option').forEach(b => b.addEventListener('click', () => {
+      const ok = b.dataset.r === item.rule.id; practice.asked++; if (ok) practice.correct++; store.recordPractice(item.rule.id, ok);
+      el.querySelectorAll('.option').forEach(x => { x.disabled = true; if (x.dataset.r === item.rule.id) x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+      document.getElementById('p-score').textContent = `${ar(practice.correct)} / ${ar(practice.asked)}`;
+      document.getElementById('p-fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'bad'}"><b>${ok ? 'صحيح ✓' : 'غير صحيح ✗'}</b> ${esc(item.note || item.rule.short)}
+        <div class="row" style="margin-top:10px"><button class="btn primary small" id="p-next" type="button">مثال آخر</button><button class="btn small" type="button" id="p-explain">اشرح الحكم</button></div></div>`;
+      document.getElementById('p-next').addEventListener('click', nextPractice);
+      document.getElementById('p-explain').addEventListener('click', () => T.explain(item.rule.id, item.text, item.note));
+    }));
+  }
+
+  /* ---------- الألوان ---------- */
+  pages.legend = function () {
+    const sample = { madd6: 'ٱلضَّآلِّينَ', madd45: 'جَآءَ', madd246: 'بِمَآ أُنزِلَ', madd2: 'قَالَ', ghunnah: 'مِن شَرِّ', idgham: 'مِن رَّبِّهِمْ', izhar: 'مِنْ خَوْفٍ', qalqalah: 'أَحَدْ', tafkhim: 'ٱللَّهُ', tarqiq: 'بِسْمِ ٱللَّهِ', silent: 'ٱلشَّمْسِ', sakt: 'مَنْ ۜ رَاقٍ' };
+    return `<h1>دليل الألوان</h1><p class="muted">كل حكم له لون ثابت في جميع أمثلة التطبيق، مع خط منقّط تحته حتى لا يعتمد التمييز على اللون وحده. الألوان مستوحاة من المصحف الملوّن المعروف (المدود بالأحمر، الغنّة بالأخضر، القلقلة بالأزرق، ما لا يُنطق بالرمادي).</p>
+      ${Object.entries(T.groups).map(([g, v]) => `<div class="card g-${g}" style="display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-top:10px"><span class="legend-sample">${esc(sample[g] || '')}</span><div><div class="row"><i style="width:14px;height:14px;border-radius:4px;background:var(--c);display:inline-block"></i><b>${esc(v.name)}</b></div><div class="muted" style="font-size:.9rem">${T.rules.filter(r => r.group === g).map(r => `<a href="#/chapter/${r.chapter}#rule-${r.id}">${esc(r.name)}</a>`).join(' · ')}</div></div></div>`).join('')}`;
+  };
+
+  /* ---------- المصطلحات ---------- */
+  pages.glossary = function () {
+    return `<h1>المصطلحات</h1><p class="muted">تعريفات مختصرة لأهم مصطلحات علم التجويد.</p><div class="card">${T.glossary.map(g => `<div class="term"><b>${esc(g.term)}</b><div>${esc(g.def)}</div></div>`).join('')}</div>`;
+  };
+
+  /* ---------- البحث ---------- */
+  const norm = s => String(s).replace(/[ً-ْٰۖ-ۭٓ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/<[^>]+>/g, '').toLowerCase();
+  function searchIndex() {
+    if (searchIndex.cache) return searchIndex.cache;
+    const items = [];
+    T.rules.forEach(r => items.push({ kind: 'حكم', title: r.name, text: r.short + ' ' + r.detail + ' ' + (r.letters || ''), href: `#/chapter/${r.chapter}#rule-${r.id}` }));
+    T.chapters.forEach(c => { items.push({ kind: 'باب', title: c.title, text: c.subtitle + ' ' + c.intro, href: `#/chapter/${c.id}` }); c.sections.forEach((s, i) => items.push({ kind: `باب: ${c.title}`, title: s.title, text: (s.body || '') + ' ' + (s.tips || []).join(' ') + ' ' + (s.examples || []).map(e => T.stripMarkup(e.text)).join(' '), href: `#/chapter/${c.id}#s${i}` })); });
+    T.glossary.forEach(g => items.push({ kind: 'مصطلح', title: g.term, text: g.def, href: '#/glossary' }));
+    items.forEach(it => { it.n = norm(it.title + ' ' + it.text); it.nt = norm(it.title); });
+    return (searchIndex.cache = items);
+  }
+  pages.search = function (_, query) {
+    const q = query.get('q') || '';
+    setTimeout(() => { const inp = document.getElementById('q'); inp.focus(); inp.addEventListener('input', () => { history.replaceState(null, '', '#/search?q=' + encodeURIComponent(inp.value)); document.getElementById('results').innerHTML = resultsHtml(inp.value); }); }, 0);
+    return `<h1>بحث</h1><div class="search-box">${I.search}<input id="q" type="search" placeholder="ابحث عن حكم أو مصطلح أو كلمة… (مثل: إقلاب، قطب جد، مِن رَّبِّهِمْ)" value="${esc(q)}"></div><div id="results">${resultsHtml(q)}</div>`;
+  };
+  function resultsHtml(q) {
+    const n = norm(q.trim()); if (!n) return '<p class="muted" style="margin-top:12px">اكتب كلمة للبحث في الأحكام والأبواب والمصطلحات.</p>';
+    const words = n.split(/\s+/).filter(Boolean);
+    const hits = searchIndex().map(it => { let score = 0; words.forEach(w => { if (it.nt.includes(w)) score += 3; if (it.n.includes(w)) score += 1; }); return { it, score }; }).filter(h => h.score > 0).sort((a, b) => b.score - a.score).slice(0, 30);
+    if (!hits.length) return '<div class="empty">لا نتائج.</div>';
+    return hits.map(({ it }) => { const snippet = it.text.replace(/<[^>]+>/g, '').slice(0, 140); return `<a class="result-item" href="${it.href}"><div class="k">${esc(it.kind)}</div><b>${esc(it.title)}</b><div class="muted" style="font-size:.9rem">${esc(snippet)}…</div></a>`; }).join('');
+  }
+
+  /* ---------- الإعدادات ---------- */
+  pages.settings = function () {
+    const s = store.settings(); const theme = document.documentElement.getAttribute('data-theme') || 'auto';
+    setTimeout(() => {
+      document.querySelectorAll('[data-theme-opt]').forEach(b => b.addEventListener('click', () => { setTheme(b.dataset.themeOpt); document.querySelectorAll('[data-theme-opt]').forEach(x => x.classList.toggle('on', x === b)); }));
+      document.getElementById('reciter').addEventListener('change', e => { store.setSetting('reciter', e.target.value); T.stopAudio(); toast('تم تغيير القارئ'); });
+      document.getElementById('fs').addEventListener('input', e => { store.setSetting('fontScale', +e.target.value); applyFont(); });
+      document.getElementById('reset').addEventListener('click', () => { if (confirm('هل تريد مسح كل التقدّم المسجّل؟')) { store.reset(); toast('تم مسح التقدّم'); renderNav('settings'); } });
+    }, 0);
+    return `<h1>الإعدادات</h1><div class="card">
+      <div class="setting"><div><b>المظهر</b><div class="muted" style="font-size:.85rem">فاتح، داكن، أو حسب النظام</div></div><div class="seg"><button data-theme-opt="light" class="${theme === 'light' ? 'on' : ''}">فاتح</button><button data-theme-opt="auto" class="${theme === 'auto' ? 'on' : ''}">تلقائي</button><button data-theme-opt="dark" class="${theme === 'dark' ? 'on' : ''}">داكن</button></div></div>
+      <div class="setting"><div><b>القارئ</b><div class="muted" style="font-size:.85rem">التلاوات من everyayah.com وتحتاج إلى اتصال بالإنترنت</div></div><select id="reciter">${T.reciters.map(r => `<option value="${r.id}" ${s.reciter === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></div>
+      <div class="setting"><div><b>حجم خط الآيات</b></div><input id="fs" type="range" min=".8" max="1.5" step=".05" value="${s.fontScale || 1}"></div>
+      <div class="setting"><div><b>مسح التقدّم</b><div class="muted" style="font-size:.85rem">يحذف الأبواب المكتملة ونتائج الاختبارات من هذا الجهاز</div></div><button class="btn small" id="reset" type="button" style="color:var(--danger)">مسح</button></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>عن التطبيق</h3><p class="muted" style="margin:6px 0 0">موسوعة التجويد: تطبيق مفتوح لتعلّم أحكام تجويد القرآن الكريم برواية حفص عن عاصم من طريق الشاطبية. المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن. الخطوط: Amiri وAmiri Quran وNoto Naskh Arabic برخصة SIL OFL. التلاوات من everyayah.com. يعمل التطبيق كليًّا في المتصفح ولا يرسل أي بيانات.</p></div>`;
+  };
+
+  function setTheme(t) { if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); try { localStorage.removeItem('tajweed:theme'); } catch (e) {} } else { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem('tajweed:theme', t); } catch (e) {} } }
+  function applyFont() { document.documentElement.style.setProperty('--quran-size', (1.9 * (store.settings().fontScale || 1)).toFixed(2) + 'rem'); }
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---------- أحداث عامة ---------- */
+  view.addEventListener('click', e => {
+    const tag = e.target.closest('.rule-tag'); if (tag) { T.explain(tag.dataset.rule); return; }
+    const done = e.target.closest('#mark-done'); if (done) { const id = location.hash.split('/')[2]?.split('#')[0]; const now = !store.chapterDone(id); store.setChapterDone(id, now); toast(now ? 'أحسنت! تم إتمام الباب' : 'تم إلغاء الإتمام'); render(); return; }
+    const zone = e.target.closest('.zone'); if (zone) { const d = JSON.parse(document.getElementById('diagram').dataset.zones)[zone.dataset.id]; document.querySelectorAll('.zone').forEach(z => z.classList.toggle('on', z === zone)); document.getElementById('diagram-info').innerHTML = `<b>${esc(d.name)}</b> <span class="letters">${esc(d.letters)}</span><div>${esc(d.desc)}</div>`; }
+  });
+  view.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && (e.target.classList.contains('zone') || e.target.classList.contains('rule-tag'))) { e.preventDefault(); e.target.click(); } });
+
+  /* ---------- التوجيه ---------- */
+  function parseHash() {
+    const h = location.hash.replace(/^#\/?/, '');
+    const [pathAndQuery, anchor] = h.split('#');
+    const [path, qs] = pathAndQuery.split('?');
+    const parts = path.split('/').filter(Boolean);
+    return { route: parts[0] || '', param: parts[1] ? decodeURIComponent(parts[1]) : '', query: new URLSearchParams(qs || ''), anchor };
+  }
+  function render() {
+    const { route, param, query, anchor } = parseHash();
+    const page = pages[route === '' ? 'home' : route];
+    T.closeSheet(); T.stopAudio();
+    view.innerHTML = page ? page(param, query) : `<div class="empty">الصفحة غير موجودة. <a href="#/">العودة إلى الرئيسية</a></div>`;
+    renderNav(route);
+    document.title = (route === '' ? '' : (route === 'chapter' && T.chapterById[param] ? T.chapterById[param].title + ' · ' : NAV.find(n => n.match(route))?.label + ' · ' || '')) + 'موسوعة التجويد';
+    if (anchor) { setTimeout(() => { const el = document.getElementById(anchor); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('active'); } }, 50); }
+    else window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', render);
+  applyFont();
+  render();
+  /* تسجيل عامل الخدمة للعمل دون اتصال (إن وُجد) */
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+})();
