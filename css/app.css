@@ -1,4 +1,15 @@
 /* موسوعة التجويد — التصميم */
+/*
+ * css/app.css — All styles. Plain CSS, no preprocessor.
+ *  - :root holds design tokens (colours, radius, fonts). Dark mode overrides
+ *    them under :root[data-theme="dark"] and under prefers-color-scheme: dark
+ *    when the user has not forced light. Use the variables, not raw colours.
+ *  - Rule colours are NOT here: ayah.js generates the .g-<group> { --c } rules
+ *    from js/data/rules.js. Components use var(--c).
+ *  - The page is RTL (dir="rtl" on <html>), so "start" is the right side.
+ *  - Sections below follow the page order: layout, components, home, chapter,
+ *    ayah, legend, sheet, quiz/practice, glossary/search, settings, diagram.
+ */
 :root {
   --bg: #f6f1e7;
   --bg-2: #efe7d6;

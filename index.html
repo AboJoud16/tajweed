@@ -18,6 +18,12 @@
   </script>
 </head>
 <body>
+  <!--
+    The page shell. Script order matters (see bottom): data files, then
+    store.js, ayah.js and finally app.js which renders pages into #view.
+    #sidenav (desktop) and #bottomnav (mobile) are filled by app.js.
+    #sheet is the "tap to explain" bottom sheet controlled by ayah.js.
+  -->
   <div class="app">
     <header class="topbar">
       <a class="brand" href="#/" aria-label="الرئيسية"><span class="mark">۞</span><span>موسوعة التجويد</span></a>

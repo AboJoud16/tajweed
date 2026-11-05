@@ -1,4 +1,12 @@
 /* يلتقط صورًا للتطبيق ويرصد أخطاء الكونسول. يحتاج Playwright وخادمًا على المنفذ 8080. */
+/*
+ * Usage: start a server first (`npm start`), then `npm run screenshots`.
+ * Env vars: BASE (default http://localhost:8080/), OUT (default ./screenshots).
+ * Captures every main route on mobile, desktop and mobile-dark, plus the
+ * explanation sheet, and fails if any page logs a console error. Handy as a
+ * quick smoke test after code changes. Requires Playwright (not a dependency
+ * in package.json; install it globally or with npx).
+ */
 const { chromium } = require('playwright');
 const fs = require('fs');
 (async () => {
