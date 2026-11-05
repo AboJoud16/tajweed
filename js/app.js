@@ -23,6 +23,7 @@
  *   #/glossary          glossary  terms
  *   #/search?q=…        search    full-text search
  *   #/settings          settings  theme, reciter, font size, reset
+ *   #/more              more      mobile hub for legend, glossary, search, settings
  *
  * TO ADD A PAGE: add pages.<name> = function (param, query) { return html; },
  * and optionally an entry in NAV. Pages that need event listeners on their own
@@ -52,27 +53,42 @@
     check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
     next: '<svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>',
     prev: '<svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>',
+    more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
+    tap: '<svg viewBox="0 0 24 24"><path d="M9 11V5a2 2 0 0 1 4 0v5"/><path d="M13 10a2 2 0 0 1 4 0v1a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4.6 15a2 2 0 0 1 3.2-2.4L9 14"/></svg>',
+    play: '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>',
+    close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+    list: '<svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   };
 
   /* ---------- التنقل ---------- */
   // Main navigation items. `match(route)` decides which item is highlighted.
-  // The bottom bar (mobile) shows NAV only; the side bar (desktop) also shows
-  // Search, Settings and the full chapter list with done ticks.
+  // bottom: false -> desktop side bar only; side: false -> mobile bottom bar only.
+  // On mobile the bottom bar has room for five items, so the secondary pages
+  // (colours, glossary, search, settings) are grouped under "More" (#/more).
+  // The side bar (desktop) lists everything plus the chapter list with ticks.
+  const MORE_ROUTES = ['more', 'legend', 'glossary', 'search', 'settings'];
   const NAV = [
     { href: '#/', icon: 'home', label: 'الرئيسية', match: r => r === '' },
-    { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' },
+    { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' || r === 'quiz' },
     { href: '#/mushaf', icon: 'quran', label: 'المصحف', match: r => r === 'mushaf' },
     { href: '#/practice', icon: 'practice', label: 'تدريب', match: r => r === 'practice' },
-    { href: '#/legend', icon: 'palette', label: 'الألوان', match: r => r === 'legend' },
+    { href: '#/legend', icon: 'palette', label: 'الألوان', match: r => r === 'legend', bottom: false },
     { href: '#/glossary', icon: 'book', label: 'المصطلحات', match: r => r === 'glossary', bottom: false },
+    { href: '#/search', icon: 'search', label: 'بحث', match: r => r === 'search', bottom: false },
+    { href: '#/settings', icon: 'settings', label: 'الإعدادات', match: r => r === 'settings', bottom: false },
+    { href: '#/more', icon: 'more', label: 'المزيد', match: r => MORE_ROUTES.includes(r), side: false },
   ];
+  // Page titles for the browser tab (routes not in NAV, or with a better name).
+  const TITLES = { more: 'المزيد', quiz: 'اختبار' };
+  // One nav link; the active one also gets aria-current for screen readers.
+  const navLink = (n, on) => `<a href="${n.href}" class="${on ? 'active' : ''}"${on ? ' aria-current="page"' : ''}>${I[n.icon]}<span>${n.label}</span></a>`;
   function renderNav(route) {
-    document.getElementById('bottomnav').innerHTML = NAV.filter(n => n.bottom !== false).map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('');
-    const side = NAV.map(n => `<a href="${n.href}" class="${n.match(route) ? 'active' : ''}">${I[n.icon]}<span>${n.label}</span></a>`).join('') +
-      `<a href="#/search" class="${route === 'search' ? 'active' : ''}">${I.search}<span>بحث</span></a>` +
-      `<a href="#/settings" class="${route === 'settings' ? 'active' : ''}">${I.settings}<span>الإعدادات</span></a>` +
-      `<div class="group">الأبواب</div>` +
-      T.chapters.map(c => `<a class="chap ${store.chapterDone(c.id) ? 'done' : ''} ${location.hash.startsWith('#/chapter/' + c.id) ? 'active' : ''}" href="#/chapter/${c.id}"><span class="n">${store.chapterDone(c.id) ? '✓' : ar(c.order)}</span><span>${esc(c.title)}</span></a>`).join('');
+    document.getElementById('bottomnav').innerHTML = NAV.filter(n => n.bottom !== false).map(n => navLink(n, n.match(route))).join('');
+    const side = NAV.filter(n => n.side !== false).map(n => navLink(n, n.match(route) && route !== 'chapter')).join('') +
+      `<div class="group">الأبواب <span>${ar(T.chapters.filter(c => store.chapterDone(c.id)).length)}/${ar(T.chapters.length)}</span></div>` +
+      T.chapters.map(c => { const on = location.hash.startsWith('#/chapter/' + c.id + '#') || location.hash === '#/chapter/' + c.id; return `<a class="chap ${store.chapterDone(c.id) ? 'done' : ''} ${on ? 'active' : ''}"${on ? ' aria-current="page"' : ''} href="#/chapter/${c.id}"><span class="n">${store.chapterDone(c.id) ? '✓' : ar(c.order)}</span><span>${esc(c.title)}</span></a>`; }).join('');
     document.getElementById('sidenav').innerHTML = side;
   }
 
@@ -107,19 +123,20 @@
     const streak = store.streak();
     return `
       <section class="hero fade-in">
-        <div class="row between">
+        <div class="hero-head">
           <div>
-            <div class="eyebrow" style="color:rgba(255,255,255,.75)">برواية حفص عن عاصم</div>
+            <div class="eyebrow">برواية حفص عن عاصم</div>
             <h1>تعلّم التجويد خطوة خطوة</h1>
           </div>
           ${ring(pct)}
         </div>
         <p>مسار مرتّب من المخارج إلى الوقف والابتداء، آيات ملوّنة بالأحكام تشرح نفسها عند اللمس، تلاوات بصوت القرّاء، واختبارات تثبّت ما تعلّمته.</p>
-        <div class="row">
+        <div class="hero-actions">
           ${cont ? `<a class="btn" href="#/chapter/${cont.id}">${s.lastChapter ? 'تابع:' : 'ابدأ:'} ${esc(cont.title)}</a>` : `<a class="btn" href="#/practice">أتممت المسار! تدرّب</a>`}
           <a class="btn ghost" href="#/practice">تدريب سريع</a>
         </div>
       </section>
+      ${onboardingHtml()}
       <div class="stats">
         <div class="stat"><b>${ar(doneCount)}<span style="font-size:.9rem;color:var(--muted)">/${ar(T.chapters.length)}</span></b><span>أبواب أتممتها</span></div>
         <div class="stat"><b>${ar(avg)}٪</b><span>متوسط الاختبارات</span></div>
@@ -131,10 +148,34 @@
       ${pathHtml(T.chapters.slice(0, 5))}
       <div class="section-title"><h2>دليل الألوان</h2><a href="#/legend">التفاصيل</a></div>
       <div class="legend">${Object.entries(T.groups).slice(0, 6).map(([g, v]) => `<div class="legend-item g-${g}"><i></i><span>${esc(v.name)}</span></div>`).join('')}</div>
-      <div class="section-title"><h2>آية اليوم</h2></div>
+      <div class="section-title" id="daily"><h2>آية اليوم</h2></div>
       ${T.ayahHtml(dailyAyah())}
       <p class="muted" style="font-size:.9rem">المس أي جزء ملوّن لتعرف الحكم وسببه.</p>`;
   };
+
+  // First-visit "how it works" card: three short steps that teach the core
+  // interactions (tap a coloured word, colours = rules, follow the path, quiz).
+  // Hidden for good once dismissed (localStorage key tajweed:onboarded) or once
+  // the learner has opened any chapter.
+  const ONBOARD_KEY = 'tajweed:onboarded';
+  function onboarded() { try { return localStorage.getItem(ONBOARD_KEY) === '1'; } catch (e) { return true; } }
+  function onboardingHtml() {
+    if (onboarded() || store.get().lastChapter) return '';
+    const steps = [
+      [I.tap, 'المس الكلمة الملوّنة', 'كل لون يدلّ على حكم. المس أي كلمة ملوّنة في الآيات لتظهر لك بطاقة تشرح الحكم وسببه.'],
+      [I.play, 'استمع ثم قلّد', 'زر «استمع» بجانب كل آية يشغّل تلاوة القارئ لتسمع الحكم منطوقًا.'],
+      [I.path, 'سر في المسار واختبر نفسك', 'الأبواب مرتّبة من الأساس إلى الأداء. أتمم الباب ثم اختبر نفسك، ونجاحك بـ ٨٠٪ يسجّله مكتملًا.'],
+    ];
+    setTimeout(() => {
+      const box = document.getElementById('onboard'); if (!box) return;
+      box.querySelector('[data-dismiss]').addEventListener('click', () => { try { localStorage.setItem(ONBOARD_KEY, '1'); } catch (e) {} box.remove(); });
+    }, 0);
+    return `<section class="onboard card fade-in" id="onboard" aria-labelledby="onboard-title">
+      <div class="row between"><h2 id="onboard-title">كيف تستخدم التطبيق؟</h2><button class="icon-btn flat" type="button" data-dismiss aria-label="إخفاء الإرشادات" title="إخفاء">${I.close}</button></div>
+      <ol class="steps">${steps.map(([ic, t, d]) => `<li><span class="ic">${ic}</span><span><b>${t}</b><span class="muted">${d}</span></span></li>`).join('')}</ol>
+      <div class="row"><a class="btn small primary" href="#/chapter/${T.chapters[0].id}">ابدأ الباب الأول</a><a class="btn small" href="#/" data-toc="daily">جرّب على آية اليوم</a></div>
+    </section>`;
+  }
 
   // Home-page card linking to the mushaf (continues from the last read position when there is one).
   function mushafCta() {
@@ -196,10 +237,12 @@
           <div class="muted">${esc(c.subtitle)}</div>
         </div>
       </div>
+      <div class="read-progress" aria-hidden="true"><span id="read-bar"></span></div>
       <div class="chapter-intro">${esc(c.intro)}</div>
+      ${c.sections.length > 1 ? `<nav class="toc card" aria-label="محتويات الباب"><b>في هذا الباب</b><ol>${c.sections.map((s, si) => `<li><a href="#/chapter/${c.id}#s${si}" data-toc="s${si}">${esc(s.title)}</a></li>`).join('')}<li><a href="#/chapter/${c.id}#summary" data-toc="summary">خلاصة الباب والاختبار</a></li></ol></nav>` : ''}
       ${c.diagram === 'makharij' ? makharijDiagram() : ''}
       ${sections}
-      <section class="summary card"><h2>خلاصة الباب</h2><ol>${c.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ol></section>
+      <section class="summary card" id="summary"><h2>خلاصة الباب</h2><ol>${c.summary.map(x => `<li>${esc(x)}</li>`).join('')}</ol></section>
       <div class="chapter-actions">
         <a class="btn primary block" href="#/quiz/${c.id}">${I.practice} ${st.best !== null ? `أعد الاختبار (أفضل نتيجة ${ar(st.best)}/${ar(st.total)})` : 'اختبر نفسك في هذا الباب'}</a>
         <button class="btn block" id="mark-done" type="button">${I.check} ${st.done ? 'تم إتمام الباب ✓ (إلغاء)' : 'أتممتُ هذا الباب'}</button>
@@ -402,6 +445,19 @@
     return hits.map(({ it }) => { const snippet = it.text.replace(/<[^>]+>/g, '').slice(0, 140); return `<a class="result-item" href="${it.href}"><div class="k">${esc(it.kind)}</div><b>${esc(it.title)}</b><div class="muted" style="font-size:.9rem">${esc(snippet)}…</div></a>`; }).join('');
   }
 
+  /* ---------- المزيد ---------- */
+  // "More" hub for mobile, where the bottom bar only fits five items.
+  // Lists every secondary page with a one-line description.
+  pages.more = function () {
+    const items = [
+      ['#/legend', 'palette', 'دليل الألوان', 'معنى كل لون من ألوان الأحكام'],
+      ['#/glossary', 'book', 'المصطلحات', 'تعريفات مختصرة لأهم مصطلحات التجويد'],
+      ['#/search', 'search', 'بحث', 'ابحث في الأحكام والأبواب والمصطلحات'],
+      ['#/settings', 'settings', 'الإعدادات', 'المظهر، القارئ، حجم الخط، مسح التقدّم'],
+    ];
+    return `<h1>المزيد</h1><div class="menu-list">${items.map(([h, ic, t, d]) => `<a class="menu-item" href="${h}"><span class="ic">${I[ic]}</span><span><b>${t}</b><span class="muted">${d}</span></span>${I.next}</a>`).join('')}</div>`;
+  };
+
   /* ---------- الإعدادات ---------- */
   // Settings page. Theme is stored in 'tajweed:theme' (read early by
   // index.html to avoid a flash); reciter and font size in store settings.
@@ -424,13 +480,22 @@
 
   // 'light' | 'dark' set data-theme on <html>; 'auto' removes it so CSS follows
   // the OS (prefers-color-scheme).
-  function setTheme(t) { if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); try { localStorage.removeItem('tajweed:theme'); } catch (e) {} } else { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem('tajweed:theme', t); } catch (e) {} } }
+  function setTheme(t) { if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); try { localStorage.removeItem('tajweed:theme'); } catch (e) {} } else { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem('tajweed:theme', t); } catch (e) {} } syncThemeButton(); }
+  // The top-bar button shows the theme it will switch TO (sun in dark mode,
+  // moon in light mode), and its label says so.
+  const isDark = () => (document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+  function syncThemeButton() {
+    const b = document.getElementById('theme-toggle'); const dark = isDark();
+    b.innerHTML = dark ? I.sun : I.moon;
+    const label = dark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن';
+    b.setAttribute('aria-label', label); b.title = label;
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', syncThemeButton);
   // Quran text size = 1.9rem × fontScale, through the --quran-size CSS variable.
   function applyFont() { document.documentElement.style.setProperty('--quran-size', (1.9 * (store.settings().fontScale || 1)).toFixed(2) + 'rem'); }
   T.applyFont = applyFont;
   document.getElementById('theme-toggle').addEventListener('click', () => {
-    const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    setTheme(cur === 'dark' ? 'light' : 'dark');
+    setTheme(isDark() ? 'light' : 'dark');
   });
 
   /* ---------- أحداث عامة ---------- */
@@ -440,6 +505,7 @@
   //   .zone       -> show details of a makharij diagram point
   // Enter / Space activate rule tags and diagram zones for keyboard users.
   view.addEventListener('click', e => {
+    const toc = e.target.closest('[data-toc]'); if (toc) { e.preventDefault(); const el = document.getElementById(toc.dataset.toc); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true }); } return; }
     const tag = e.target.closest('.rule-tag'); if (tag) { T.explain(tag.dataset.rule); return; }
     const done = e.target.closest('#mark-done'); if (done) { const id = location.hash.split('/')[2]?.split('#')[0]; const now = !store.chapterDone(id); store.setChapterDone(id, now); toast(now ? 'أحسنت! تم إتمام الباب' : 'تم إلغاء الإتمام'); render(); return; }
     const zone = e.target.closest('.zone'); if (zone) { const d = JSON.parse(document.getElementById('diagram').dataset.zones)[zone.dataset.id]; document.querySelectorAll('.zone').forEach(z => z.classList.toggle('on', z === zone)); document.getElementById('diagram-info').innerHTML = `<b>${esc(d.name)}</b> <span class="letters">${esc(d.letters)}</span><div>${esc(d.desc)}</div>`; }
@@ -464,11 +530,32 @@
     T.closeSheet(); T.stopAudio();
     view.innerHTML = page ? page(param, query) : `<div class="empty">الصفحة غير موجودة. <a href="#/">العودة إلى الرئيسية</a></div>`;
     renderNav(route);
-    document.title = (route === '' ? '' : (route === 'chapter' && T.chapterById[param] ? T.chapterById[param].title + ' · ' : NAV.find(n => n.match(route))?.label + ' · ' || '')) + 'موسوعة التجويد';
+    const label = route === 'chapter' && T.chapterById[param] ? T.chapterById[param].title : (TITLES[route] || NAV.find(n => n.match(route) && n.side !== false)?.label);
+    document.title = (route && label ? label + ' · ' : '') + 'موسوعة التجويد';
+    // Move keyboard / screen-reader focus to the new page's heading, so a
+    // route change is announced and Tab continues from the page, not the nav.
+    // Skipped on first load and for the search page (it focuses its input).
+    if (rendered && route !== 'search') { const h = view.querySelector('h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
+    rendered = true;
     if (anchor) { setTimeout(() => { const el = document.getElementById(anchor); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('active'); } }, 50); }
     else window.scrollTo(0, 0);
   }
+  let rendered = false;
   window.addEventListener('hashchange', render);
+  // Reading progress bar on chapter pages (#read-bar width = scrolled %).
+  // Also toggles .scrolled on the top bar to add a shadow once the page moves.
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      document.querySelector('.topbar').classList.toggle('scrolled', window.scrollY > 4);
+      const bar = document.getElementById('read-bar'); if (!bar) return;
+      const max = document.documentElement.scrollHeight - innerHeight;
+      bar.style.width = (max > 0 ? Math.min(100, 100 * scrollY / max) : 0).toFixed(1) + '%';
+    });
+  }, { passive: true });
+  syncThemeButton();
   applyFont();
   render();
   /* تسجيل عامل الخدمة للعمل دون اتصال (إن وُجد) */

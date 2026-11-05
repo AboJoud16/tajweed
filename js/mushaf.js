@@ -145,7 +145,7 @@ window.TAJWEED = window.TAJWEED || {};
     if (player.s && player.s !== s) stopPlayer();
     return `
       <div class="mushaf-bar">
-        <a class="btn small ghost" href="#/mushaf">${I.list} فهرس السور</a>
+        <a class="btn small ghost" href="#/mushaf">${I.list}<span class="lbl">فهرس السور</span></a>
         <span class="spacer"></span>
         <div class="seg" role="group" aria-label="طريقة العرض"><button type="button" data-mode="flow" class="${m.mode !== 'list' ? 'on' : ''}" title="عرض متصل كالمصحف">متصل</button><button type="button" data-mode="list" class="${m.mode === 'list' ? 'on' : ''}" title="كل آية على حدة">آية آية</button></div>
         <button type="button" class="btn small ${m.color === false ? '' : 'on-color'}" id="m-color" aria-pressed="${m.color !== false}" title="إظهار أو إخفاء تلوين الأحكام">${I.palette} التلوين</button>
