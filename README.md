@@ -98,7 +98,7 @@ Coloured Quran text uses the markup `{ruleId|text to colour|optional why-note}` 
 ### Audio, storage, offline
 
 - Audio streams from `https://everyayah.com/data/<reciter>/<SSS><AAA>.mp3` (surah and ayah padded to 3 digits). Reciters are listed in `T.reciters` in `ayah.js`. Nothing is downloaded into the repo.
-- Progress and settings live in `localStorage` under `tajweed:progress`, `tajweed:settings`, `tajweed:mushaf` (last read position, bookmarks, reader preferences) and `tajweed:theme`. The shape is documented at the top of `js/store.js`. No data leaves the device.
+- Progress and settings live in `localStorage` under `tajweed:progress`, `tajweed:settings`, `tajweed:mushaf` (last read position, bookmarks, reader preferences), `tajweed:theme` and `tajweed:onboarded` (first-visit help card dismissed). The shape is documented at the top of `js/store.js`. No data leaves the device.
 - `sw.js` caches the app shell network-first, so online users always get the latest files; surah files are cached once opened. Add new files to its `SHELL` list if they are needed offline, and bump `CACHE` when that list changes.
 
 ### Conventions

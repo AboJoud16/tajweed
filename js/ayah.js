@@ -163,8 +163,20 @@ window.TAJWEED = window.TAJWEED || {};
   const sheet = document.getElementById('sheet');
   const backdrop = document.getElementById('sheet-backdrop');
   let activeSpan = null;
-  function openSheet(html) { sheet.innerHTML = html; sheet.classList.add('open'); backdrop.classList.add('open'); sheet.focus?.(); }
-  function closeSheet() { sheet.classList.remove('open'); backdrop.classList.remove('open'); if (activeSpan) { activeSpan.classList.remove('active'); activeSpan = null; } }
+  // returnFocus: the element that had focus when the sheet opened; focus goes
+  // back to it on close so keyboard users keep their place in the text.
+  let returnFocus = null;
+  function openSheet(html) {
+    if (!sheet.classList.contains('open')) returnFocus = document.activeElement;
+    sheet.innerHTML = html;
+    sheet.classList.add('open'); backdrop.classList.add('open'); sheet.focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    const wasOpen = sheet.classList.contains('open');
+    sheet.classList.remove('open'); backdrop.classList.remove('open'); if (activeSpan) { activeSpan.classList.remove('active'); activeSpan = null; }
+    if (wasOpen && returnFocus && document.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
+    returnFocus = null;
+  }
   T.closeSheet = closeSheet;
   T.openSheet = openSheet;
   backdrop.addEventListener('click', closeSheet);
