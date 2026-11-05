@@ -1,4 +1,18 @@
 /* اختبارات الأبواب: سؤال، خيارات، رقم الإجابة الصحيحة (يبدأ من 0)، وتعليل. */
+/*
+ * js/data/quizzes.js — One quiz per chapter, keyed by chapter id.
+ *
+ *   TAJWEED.quizzes = { [chapterId]: [ question, … ] }
+ *   question = {
+ *     q:       the question text
+ *     options: 2–4 answer choices (shown with letters أ ب ج د; must be unique)
+ *     answer:  index of the correct option, starting at 0
+ *     why:     explanation shown after answering (right or wrong)
+ *   }
+ *
+ * Questions are shuffled each attempt but options keep their order.
+ * npm test requires at least 5 questions per chapter and a valid answer index.
+ */
 window.TAJWEED = window.TAJWEED || {};
 
 TAJWEED.quizzes = {

@@ -1,4 +1,8 @@
 /* المصطلحات */
+/*
+ * js/data/glossary.js — Glossary page entries, shown in this order and
+ * included in search.  Each entry: { term, def } (plain text).
+ */
 window.TAJWEED = window.TAJWEED || {};
 TAJWEED.glossary = [
   { term: 'الحركة', def: 'مقدار زمني يساوي زمن النطق بحرف متحرك؛ تُقاس به المدود والغنّة.' },

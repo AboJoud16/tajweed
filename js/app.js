@@ -1,9 +1,45 @@
 /* موسوعة التجويد — التطبيق: التوجيه والصفحات */
+/*
+ * js/app.js — The single-page app: navigation, hash router and every page.
+ * Loaded last (see index.html), so all data and helpers already exist.
+ *
+ * HOW A PAGE IS SHOWN
+ *   1. The URL hash changes (a link like <a href="#/chapter/madd">).
+ *   2. render() parses the hash with parseHash():
+ *        #/<route>/<param>?<query>#<anchor>
+ *      e.g. #/chapter/noon-sakinah#rule-iqlab -> route 'chapter',
+ *      param 'noon-sakinah', anchor 'rule-iqlab' (scrolled into view).
+ *   3. pages[route](param, query) returns an HTML string that replaces
+ *      the contents of <main id="view">.
+ *   4. Both navigation bars are redrawn to mark the active item.
+ *
+ * ROUTES
+ *   #/                  home      dashboard, continue button, ayah of the day
+ *   #/path              path      all chapters in order with status
+ *   #/chapter/<id>      chapter   one lesson (id from js/data/chapters.js)
+ *   #/quiz/<id>         quiz      that chapter's quiz (js/data/quizzes.js)
+ *   #/practice          practice  "name the rule" drill; ?rule=<id> or ?chapter=<id>
+ *   #/legend            legend    colour legend
+ *   #/glossary          glossary  terms
+ *   #/search?q=…        search    full-text search
+ *   #/settings          settings  theme, reciter, font size, reset
+ *
+ * TO ADD A PAGE: add pages.<name> = function (param, query) { return html; },
+ * and optionally an entry in NAV. Pages that need event listeners on their own
+ * elements bind them in a setTimeout(…, 0), i.e. after the HTML is in the DOM.
+ * Clicks shared by many pages are delegated on #view (see "أحداث عامة").
+ *
+ * SAFETY: always pass data through esc() before putting it in HTML.
+ * Shortcuts: T = window.TAJWEED, esc = HTML escape, ar = Arabic-Indic digits,
+ * store = js/store.js.
+ */
 (function () {
   const T = TAJWEED, esc = T.esc, ar = T.ar, store = T.store;
   const view = document.getElementById('view');
 
   /* ---------- أيقونات ---------- */
+  // Inline SVG icons (stroke style comes from CSS), used as I.home, I.check, …
+  // Note: in RTL "next" points left and "prev" points right.
   const I = {
     home: '<svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>',
     path: '<svg viewBox="0 0 24 24"><path d="M4 6h8a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8h12"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="22" r="1.5"/></svg>',
@@ -18,6 +54,9 @@
   };
 
   /* ---------- التنقل ---------- */
+  // Main navigation items. `match(route)` decides which item is highlighted.
+  // The bottom bar (mobile) shows NAV only; the side bar (desktop) also shows
+  // Search, Settings and the full chapter list with done ticks.
   const NAV = [
     { href: '#/', icon: 'home', label: 'الرئيسية', match: r => r === '' },
     { href: '#/path', icon: 'path', label: 'المسار', match: r => r === 'path' || r === 'chapter' },
@@ -36,6 +75,12 @@
   }
 
   /* ---------- أدوات ---------- */
+  // toast(msg)          short message at the bottom for ~2 s
+  // ring(pct, size)     circular progress SVG with the % in the middle
+  // shuffle(arr)        Fisher–Yates shuffle, returns a new array
+  // nextChapter()       first chapter not yet done
+  // continueChapter()   last visited chapter if unfinished, else nextChapter()
+  // chapterStatus(c)    { done, best quiz score, total questions, visited }
   function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
   function ring(pct, size) { const r = 32, c = 2 * Math.PI * r; return `<div class="ring" style="${size ? `width:${size}px;height:${size}px` : ''}"><svg viewBox="0 0 76 76"><circle class="track" cx="38" cy="38" r="${r}"/><circle class="bar" cx="38" cy="38" r="${r}" stroke-dasharray="${c * pct / 100} ${c}"/></svg><div class="val">${ar(pct)}٪</div></div>`; }
   function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -47,7 +92,11 @@
   }
 
   /* ---------- الصفحات ---------- */
+  // Every page is a function (param, query) => HTML string. See ROUTES above.
   const pages = {};
+
+  // Home: progress ring, continue button, stats, first 5 chapters, legend
+  // preview, and an "ayah of the day".
 
   pages.home = function () {
     const pct = store.overall(); const cont = continueChapter(); const s = store.get();
@@ -83,11 +132,16 @@
       <p class="muted" style="font-size:.9rem">المس أي جزء ملوّن لتعرف الحكم وسببه.</p>`;
   };
 
+  // Pick an example with a reference and at least two coloured segments.
+  // The index is the number of days since 1970, so it changes once a day and
+  // is the same for everyone on that day.
   function dailyAyah() {
     const all = []; T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(e => { if (e.ref && (e.text.match(/\{/g) || []).length >= 2) all.push(e); })));
     const d = Math.floor(Date.now() / 864e5); return all[d % all.length];
   }
 
+  // The learning path list. A chapter is 'done', 'current' (the one to
+  // continue) or neither; the right side shows the quiz score or reading time.
   function pathHtml(chapters) {
     const cont = continueChapter();
     return `<div class="path">${chapters.map(c => {
@@ -105,6 +159,11 @@
     return `<div class="row between" style="margin-bottom:14px"><div><h1>مسار التعلّم</h1><p class="muted" style="margin:0">${ar(T.chapters.length)} بابًا مرتّبة من الأساس إلى الأداء. أتمم الباب ثم اختبر نفسك.</p></div>${ring(pct)}</div>${pathHtml(T.chapters)}`;
   };
 
+  // Chapter (lesson) page. Opening it marks the chapter visited and makes it
+  // the "continue" chapter. Layout: header, intro, optional diagram, sections
+  // (rule tags, body HTML, example ayat, tips), summary, quiz / mark-done
+  // buttons, prev/next links. Section ids are s0, s1, … and rule tags have
+  // id rule-<ruleId> so search results and the legend can deep-link to them.
   pages.chapter = function (id) {
     const c = T.chapterById[id]; if (!c) return `<div class="empty">الباب غير موجود.</div>`;
     store.visitChapter(id);
@@ -141,6 +200,12 @@
       </div>`;
   };
 
+  // Interactive side view of the vocal tract, only for chapters with
+  // diagram: 'makharij'. Each Z row is one articulation point:
+  //   [id, x, y, name, letters, description]   (x, y in SVG units)
+  // The positions are approximate and only for teaching. The zone data is
+  // stored as JSON in data-zones; the click handler at the bottom of this file
+  // reads it to fill #diagram-info.
   function makharijDiagram() {
     const Z = [
       ['khayshum', 200, 52, 'الخيشوم', 'الغنّة', 'أعلى الأنف: منه تخرج الغنّة المصاحبة للنون والميم.'],
@@ -179,6 +244,11 @@
   }
 
   /* ---------- الاختبار ---------- */
+  // Quiz flow: questions are shuffled once, shown one by one, and each answer
+  // reveals the correct option and the `why` explanation. At the end the score
+  // is saved (store.recordQuiz). Scoring 80% or more marks the chapter done.
+  // quizState = { id, qs (shuffled questions), i (current index),
+  //               results (true/false per answered question), answered }
   pages.quiz = function (id) {
     const c = T.chapterById[id]; const qs = T.quizzes[id];
     if (!c || !qs) return `<div class="empty">لا يوجد اختبار لهذا الباب.</div>`;
@@ -218,6 +288,15 @@
   }
 
   /* ---------- التدريب: تعرّف على الحكم ---------- */
+  // Practice ("name the rule"): picks a random coloured segment from all
+  // chapter examples, shows the ayah with only that segment highlighted
+  // (opts.plain, so tapping does not reveal the answer) and asks which rule it is.
+  // Wrong options come first from the same chapter (harder), then from others.
+  // 'silent' and 'hamzat-qat' segments are never asked, because they are not
+  // a rule you can recognise from the highlight alone.
+
+  // Every coloured segment, optionally filtered by rule id or chapter id.
+  // Each item: { ex (the example), idx (segment index), rule, text, note }.
   function practicePool(filter) {
     const pool = [];
     T.chapters.forEach(c => c.sections.forEach(s => (s.examples || []).forEach(ex => {
@@ -269,6 +348,8 @@
   }
 
   /* ---------- الألوان ---------- */
+  // Legend: one card per colour group in TAJWEED.groups, with a sample word
+  // and links to every rule in that group.
   pages.legend = function () {
     const sample = { madd6: 'ٱلضَّآلِّينَ', madd45: 'جَآءَ', madd246: 'بِمَآ أُنزِلَ', madd2: 'قَالَ', ghunnah: 'مِن شَرِّ', idgham: 'مِن رَّبِّهِمْ', izhar: 'مِنْ خَوْفٍ', qalqalah: 'أَحَدْ', tafkhim: 'ٱللَّهُ', tarqiq: 'بِسْمِ ٱللَّهِ', silent: 'ٱلشَّمْسِ', sakt: 'مَنْ ۜ رَاقٍ' };
     return `<h1>دليل الألوان</h1><p class="muted">كل حكم له لون ثابت في جميع أمثلة التطبيق، مع خط منقّط تحته حتى لا يعتمد التمييز على اللون وحده. الألوان مستوحاة من المصحف الملوّن المعروف (المدود بالأحمر، الغنّة بالأخضر، القلقلة بالأزرق، ما لا يُنطق بالرمادي).</p>
@@ -281,7 +362,12 @@
   };
 
   /* ---------- البحث ---------- */
+  // norm(): makes Arabic text searchable regardless of diacritics: removes
+  // harakat and Quranic marks, unifies alef forms (أ إ آ ٱ -> ا), ة -> ه,
+  // ى -> ي, and strips HTML tags.
   const norm = s => String(s).replace(/[ً-ْٰۖ-ۭٓ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/<[^>]+>/g, '').toLowerCase();
+  // Builds (once, then cached) a list of searchable items: rules, chapters,
+  // chapter sections (body, tips and example text) and glossary terms.
   function searchIndex() {
     if (searchIndex.cache) return searchIndex.cache;
     const items = [];
@@ -296,6 +382,8 @@
     setTimeout(() => { const inp = document.getElementById('q'); inp.focus(); inp.addEventListener('input', () => { history.replaceState(null, '', '#/search?q=' + encodeURIComponent(inp.value)); document.getElementById('results').innerHTML = resultsHtml(inp.value); }); }, 0);
     return `<h1>بحث</h1><div class="search-box">${I.search}<input id="q" type="search" placeholder="ابحث عن حكم أو مصطلح أو كلمة… (مثل: إقلاب، قطب جد، مِن رَّبِّهِمْ)" value="${esc(q)}"></div><div id="results">${resultsHtml(q)}</div>`;
   };
+  // Scoring: each query word found in the title adds 3, found anywhere adds 1.
+  // Best 30 results are shown.
   function resultsHtml(q) {
     const n = norm(q.trim()); if (!n) return '<p class="muted" style="margin-top:12px">اكتب كلمة للبحث في الأحكام والأبواب والمصطلحات.</p>';
     const words = n.split(/\s+/).filter(Boolean);
@@ -305,6 +393,8 @@
   }
 
   /* ---------- الإعدادات ---------- */
+  // Settings page. Theme is stored in 'tajweed:theme' (read early by
+  // index.html to avoid a flash); reciter and font size in store settings.
   pages.settings = function () {
     const s = store.settings(); const theme = document.documentElement.getAttribute('data-theme') || 'auto';
     setTimeout(() => {
@@ -322,7 +412,10 @@
     <div class="card" style="margin-top:14px"><h3>عن التطبيق</h3><p class="muted" style="margin:6px 0 0">موسوعة التجويد: تطبيق مفتوح لتعلّم أحكام تجويد القرآن الكريم برواية حفص عن عاصم من طريق الشاطبية. المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن. الخطوط: Amiri وAmiri Quran وNoto Naskh Arabic برخصة SIL OFL. التلاوات من everyayah.com. يعمل التطبيق كليًّا في المتصفح ولا يرسل أي بيانات.</p></div>`;
   };
 
+  // 'light' | 'dark' set data-theme on <html>; 'auto' removes it so CSS follows
+  // the OS (prefers-color-scheme).
   function setTheme(t) { if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); try { localStorage.removeItem('tajweed:theme'); } catch (e) {} } else { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem('tajweed:theme', t); } catch (e) {} } }
+  // Quran text size = 1.9rem × fontScale, through the --quran-size CSS variable.
   function applyFont() { document.documentElement.style.setProperty('--quran-size', (1.9 * (store.settings().fontScale || 1)).toFixed(2) + 'rem'); }
   document.getElementById('theme-toggle').addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -330,6 +423,11 @@
   });
 
   /* ---------- أحداث عامة ---------- */
+  // Delegated handlers on #view (survive re-renders):
+  //   .rule-tag   -> open the explanation sheet for that rule
+  //   #mark-done  -> toggle "chapter done" for the chapter in the URL
+  //   .zone       -> show details of a makharij diagram point
+  // Enter / Space activate rule tags and diagram zones for keyboard users.
   view.addEventListener('click', e => {
     const tag = e.target.closest('.rule-tag'); if (tag) { T.explain(tag.dataset.rule); return; }
     const done = e.target.closest('#mark-done'); if (done) { const id = location.hash.split('/')[2]?.split('#')[0]; const now = !store.chapterDone(id); store.setChapterDone(id, now); toast(now ? 'أحسنت! تم إتمام الباب' : 'تم إلغاء الإتمام'); render(); return; }
@@ -338,6 +436,7 @@
   view.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && (e.target.classList.contains('zone') || e.target.classList.contains('rule-tag'))) { e.preventDefault(); e.target.click(); } });
 
   /* ---------- التوجيه ---------- */
+  // Hash router. See the explanation at the top of this file.
   function parseHash() {
     const h = location.hash.replace(/^#\/?/, '');
     const [pathAndQuery, anchor] = h.split('#');
@@ -345,6 +444,9 @@
     const parts = path.split('/').filter(Boolean);
     return { route: parts[0] || '', param: parts[1] ? decodeURIComponent(parts[1]) : '', query: new URLSearchParams(qs || ''), anchor };
   }
+  // Draw the current route: close the sheet, stop audio, render the page,
+  // redraw navigation, set the tab title, then scroll to the anchor (if any)
+  // or to the top.
   function render() {
     const { route, param, query, anchor } = parseHash();
     const page = pages[route === '' ? 'home' : route];
