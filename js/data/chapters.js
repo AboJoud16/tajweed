@@ -1,5 +1,37 @@
 /* الأبواب — مسار التعلّم. النص القرآني برواية حفص عن عاصم.
    ترميز الأمثلة: {معرّف الحكم|النص الملوّن|ملاحظة اختيارية}. */
+/*
+ * js/data/chapters.js — The learning path: chapters (أبواب) in teaching order.
+ * The array order IS the order shown in the app; `order` (1, 2, …) is added
+ * automatically at the bottom of this file.
+ *
+ * Chapter fields:
+ *   id        unique, lowercase-with-dashes; used in URLs (#/chapter/<id>),
+ *             as the key in quizzes.js, and as `chapter` in rules.js
+ *   icon      emoji / symbol shown on the path and the chapter header
+ *   level     difficulty label (تمهيد، الأساس، …)
+ *   title, subtitle, intro   texts shown on the path and chapter page
+ *   minutes   estimated reading time
+ *   diagram   optional; 'makharij' shows the interactive diagram (app.js)
+ *   sections  array of lesson sections, see below
+ *   summary   array of short take-away sentences
+ *
+ * Section fields:
+ *   title     section heading
+ *   rules     optional array of rule ids shown as clickable tags
+ *   body      lesson text. This is trusted HTML (<b>, <br>, …) inserted as-is,
+ *             so only put reviewed content here.
+ *   examples  optional array of example ayat:
+ *               { text, ref?: [surahNumber, ayahNumber, 'surah name'], note? }
+ *             text uses the markup {ruleId|coloured text|optional why-note}.
+ *             ref enables the audio button and the reference under the ayah;
+ *             npm test checks the ayah number exists for that surah.
+ *             note is a general note shown under the ayah.
+ *   tips      optional array of short warnings / tips (plain text)
+ *
+ * Quran text is Hafs 'an 'Asim in Uthmani script. Copy it from a trusted
+ * mushaf source, then add the markup without changing any letter or mark.
+ */
 window.TAJWEED = window.TAJWEED || {};
 
 TAJWEED.chapters = [
@@ -459,5 +491,6 @@ TAJWEED.chapters = [
   },
 ];
 
+// Add `order` (1-based position) to each chapter and build the id -> chapter lookup.
 TAJWEED.chapterById = {};
 TAJWEED.chapters.forEach((c, i) => { c.order = i + 1; TAJWEED.chapterById[c.id] = c; });

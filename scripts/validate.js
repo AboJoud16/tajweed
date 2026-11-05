@@ -1,5 +1,18 @@
 #!/usr/bin/env node
 /* يتحقق من سلامة بيانات التطبيق: معرّفات الأحكام في الأمثلة، مراجع الآيات، الاختبارات، وملفات المصحف (العدد، الحدود، بصمة النص). */
+/*
+ * Run with `npm test` (or `node scripts/validate.js`) after any content change.
+ * Loads the four data files in a Node sandbox (no browser needed) and checks:
+ *   - every rule points to an existing chapter and colour group
+ *   - every rule id used in sections and example markup exists
+ *   - example markup braces are balanced
+ *   - every example ref [surah, ayah] is a real ayah (SURAH_AYAT table below)
+ *   - every chapter has at least 5 quiz questions with valid, unique options
+ *   - data/mushaf/: 114 files, 6,236 ayat, tajweed spans inside bounds with known rule ids,
+ *     pause marks at word ends with the exact counts of the source text, and the SHA-256 of the
+ *     reconstructed Tanzil lines (so the Quran text cannot be edited by hand without failing)
+ * Exits with code 1 and a list of errors if anything is wrong.
+ */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -13,6 +26,8 @@ const T = ctx.window.TAJWEED;
 const errors = [];
 const ruleIds = new Set(T.rules.map(r => r.id));
 const chapterIds = new Set(T.chapters.map(c => c.id));
+// Number of ayat per surah, only for surahs used so far. When an example cites
+// a new surah, add it here (surah number: ayah count).
 const SURAH_AYAT = {1:7,2:286,3:200,4:176,5:120,6:165,7:206,9:129,10:109,11:123,12:111,13:43,16:128,17:111,18:110,19:98,20:135,21:112,23:118,24:64,26:227,27:93,30:60,34:54,36:83,38:88,50:45,54:55,69:52,73:20,75:40,77:50,78:40,80:42,81:29,83:36,89:30,91:15,92:21,93:11,96:19,99:8,100:11,102:8,103:3,104:9,105:5,106:4,107:7,108:3,110:3,111:5,112:4,113:5,114:6};
 
 for (const r of T.rules) {
@@ -20,6 +35,7 @@ for (const r of T.rules) {
   if (!T.groups[r.group]) errors.push(`rule ${r.id}: unknown group ${r.group}`);
 }
 let examples = 0, spans = 0;
+// Same pattern as MARK in js/ayah.js. Keep both in sync.
 const markupRe = /\{([a-z0-9-]+)\|([^{}|]+)(?:\|([^{}]*))?\}/g;
 for (const c of T.chapters) {
   if (!T.quizzes[c.id] || T.quizzes[c.id].length < 5) errors.push(`chapter ${c.id}: needs at least 5 quiz questions`);

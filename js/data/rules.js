@@ -1,5 +1,30 @@
 /* الأحكام (rules) — المرجع الذي تعتمد عليه الأمثلة الملوّنة والبطاقات والتدريب.
    كل حكم: id، الاسم، المجموعة اللونية (group)، الباب (chapter)، تعريف قصير، تفصيل، وكيفية الأداء. */
+/*
+ * js/data/rules.js — Tajweed rules and their colour groups. Data only, no logic.
+ *
+ * TAJWEED.groups: colour groups. Several rules can share one colour.
+ *   key        group id; used as CSS class g-<key> (see injectColors in ayah.js)
+ *   name       label shown in the legend and the explanation sheet
+ *   color      text colour on the light theme
+ *   dark       text colour on the dark theme
+ *   Keep enough contrast against the background in both themes.
+ *
+ * TAJWEED.rules: one object per rule.
+ *   id       unique, lowercase-with-dashes; used in example markup
+ *            {id|text|note} in chapters.js, in section `rules` lists, and in
+ *            URLs (#/practice?rule=<id>). Do not rename an id without updating
+ *            every use (npm test will report broken ones).
+ *   chapter  id of the chapter that teaches it (chapters.js)
+ *   group    key in TAJWEED.groups (decides the colour)
+ *   name     Arabic name shown to the learner
+ *   letters  optional, the letters that trigger the rule
+ *   short    one-sentence definition (sheet, practice feedback, search)
+ *   detail   full explanation (sheet "التفصيل", search)
+ *   how      optional, how to pronounce it (sheet "كيف تؤدّيه")
+ *
+ * TAJWEED.ruleById: lookup table built at the bottom of this file.
+ */
 window.TAJWEED = window.TAJWEED || {};
 
 TAJWEED.groups = {
@@ -214,5 +239,6 @@ TAJWEED.rules = [
     how: 'تجاوز الحرف نطقًا مع الحفاظ على الحركة التي قبله.' },
 ];
 
+// id -> rule lookup, used everywhere instead of searching the array.
 TAJWEED.ruleById = {};
 TAJWEED.rules.forEach(r => { TAJWEED.ruleById[r.id] = r; });

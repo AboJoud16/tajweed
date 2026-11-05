@@ -1,4 +1,20 @@
 /* عامل الخدمة: يخزّن ملفات التطبيق للعمل دون اتصال، وسور المصحف بعد أول زيارة لها. التلاوات تُحمَّل من الشبكة دائمًا. */
+/*
+ * sw.js — Service worker (registered at the end of js/app.js, only over http/https).
+ *
+ * Strategy: network first, cache as fallback. Every same-origin request is
+ * fetched from the network and the response is copied into the cache; when
+ * offline, the cached copy is served (or index.html for unknown pages).
+ * So users always get the latest files when online, and the app still works
+ * offline after one visit.
+ *
+ * Cross-origin requests (everyayah.com audio) are not touched at all.
+ * data/mushaf/NNN.json surah files are cached the same way the first time a surah is opened.
+ *
+ * When you add a new file the app needs offline, add it to SHELL so it is
+ * cached at install time. Changing CACHE (e.g. 'tajweed-v2') makes the next
+ * activation delete the old cache.
+ */
 const CACHE = 'tajweed-v2';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/fonts.css', './css/app.css',
