@@ -362,6 +362,8 @@ table.marks td:first-child { font-family: var(--font-quran); font-size: 1.5rem; 
 .mushaf-legend .legend { margin-top: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .mushaf-legend .legend-item { padding: 6px 10px; font-size: .85rem; background: var(--surface-2); }
 .mushaf .q { font-family: var(--font-quran); font-size: var(--quran-size); line-height: 2.4; text-align: right; word-spacing: .12em; }
+/* Isti'adha header: smaller, muted and in the heading font so it reads as distinct from the basmalah and the ayat. */
+.mushaf .istiadha { width: fit-content; max-width: 100%; margin: 4px auto 10px; padding: 4px 18px; border-block: 1px solid var(--line); text-align: center; font-family: var(--font-head); font-size: calc(var(--quran-size) * .72); line-height: 2; color: var(--muted); }
 .mushaf .basmalah { text-align: center; margin: 6px 0 14px; color: var(--primary-ink); }
 .mushaf .flow { padding: 18px 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); text-align: justify; text-align-last: center; }
 .mushaf .ay { transition: background .2s; border-radius: 6px; scroll-margin-top: 90px; }

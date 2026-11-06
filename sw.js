@@ -15,7 +15,7 @@
  * cached at install time. Changing CACHE (e.g. 'tajweed-v2') makes the next
  * activation delete the old cache.
  */
-const CACHE = 'tajweed-v3';
+const CACHE = 'tajweed-v4';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/fonts.css', './css/app.css',
   './js/data/rules.js', './js/data/chapters.js', './js/data/quizzes.js', './js/data/glossary.js',

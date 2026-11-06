@@ -156,13 +156,16 @@ window.TAJWEED = window.TAJWEED || {};
       <div class="chapter-nav" id="mushaf-nav"></div>`;
   }
 
-  // Renders basmalah + ayat in flow mode (one justified block, like a printed page) or list mode (one card per ayah).
+  // Renders isti'adha + basmalah + ayat in flow mode (one justified block, like a printed page) or list mode (one card per ayah).
   function drawReader(data, meta, ayah) {
     const s = data.surah; const m = store.mushaf();
     document.getElementById('mushaf-title').innerHTML = `<div class="num">${ar(s)}</div><div><h1>سورة ${esc(meta.name)}</h1><div class="muted">${TYPE[meta.type] || ''} · ${ar(meta.count)} آية${meta.n > 1 ? ` · الجزء ${ar(juzOf(s, 1))}` : ''}</div></div>
       <div class="row"><button type="button" class="btn small primary" id="m-play">${I.play} استمع للسورة</button></div>`;
     const last = m.last && m.last.s === s && m.last.a > 1 && !ayah ? `<div class="row" style="margin:0 0 10px"><a class="chip accent" href="#/mushaf/${s}?ayah=${m.last.a}">آخر قراءة: الآية ${ar(m.last.a)} — انتقل إليها</a></div>` : '';
     const legend = `<details class="mushaf-legend"><summary>دليل الألوان</summary><div class="legend">${Object.entries(T.groups).map(([g, v]) => `<div class="legend-item g-${g}"><i></i><span>${esc(v.name)}</span></div>`).join('')}</div><p class="muted" style="font-size:.85rem;margin:8px 0 0">التلوين مولَّد آليًّا كمُعين للتعلّم وليس مرجعًا؛ النص نفسه منقول بلا تعديل.</p></details>`;
+    // Isti'adha shown before every surah (including al-Fatiha and at-Tawbah). It is a display header,
+    // not Quran text: it is never stored in the ayah data, never coloured, and not tappable.
+    const istiadha = `<div class="istiadha" role="note" aria-label="الاستعاذة">أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ</div>`;
     const basm = data.basmalah ? `<div class="basmalah q">${colorHtml(data.basmalah.t, data.basmalah.j)}</div>` : '';
     let body;
     if (m.mode === 'list') {
@@ -170,7 +173,7 @@ window.TAJWEED = window.TAJWEED || {};
     } else {
       body = `<div class="q flow">${data.ayat.map(v => `<span class="ay" id="ayah-${v.n}" data-n="${v.n}">${colorHtml(v.t, v.j, v.w)} <span class="aya-num" role="button" tabindex="0" data-n="${v.n}" aria-label="خيارات الآية ${ar(v.n)}">${ar(v.n)}</span></span> `).join('')}</div>`;
     }
-    document.getElementById('mushaf').innerHTML = last + legend + basm + body;
+    document.getElementById('mushaf').innerHTML = last + legend + istiadha + basm + body;
     const prev = s > 1 ? index.surahs[s - 2] : null, next = s < 114 ? index.surahs[s] : null;
     document.getElementById('mushaf-nav').innerHTML = `${prev ? `<a class="btn ghost" href="#/mushaf/${prev.n}">${I.prev} ${esc(prev.name)}</a>` : '<span></span>'}${next ? `<a class="btn ghost" href="#/mushaf/${next.n}">${esc(next.name)} ${I.next}</a>` : ''}`;
     if (ayah) { const el = document.getElementById('ayah-' + ayah); if (el) { setTimeout(() => { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('focus'); setTimeout(() => el.classList.remove('focus'), 3000); }, 60); setLast(s, ayah); } }
