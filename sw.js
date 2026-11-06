@@ -19,7 +19,7 @@ const CACHE = 'tajweed-v4';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/fonts.css', './css/app.css',
   './js/data/rules.js', './js/data/chapters.js', './js/data/quizzes.js', './js/data/glossary.js',
-  './js/store.js', './js/ayah.js', './js/mushaf.js', './js/app.js', './icons/icon.svg', './data/mushaf/index.json',
+  './js/store.js', './js/ayah.js', './js/mushaf.js', './js/app.js', './icons/icon.svg', './icons/favicon.svg', './data/mushaf/index.json',
   './fonts/amiri-quran-400-arabic.woff2', './fonts/amiri-400-arabic.woff2', './fonts/amiri-700-arabic.woff2',
   './fonts/noto-naskh-arabic-400-arabic.woff2', './fonts/noto-naskh-arabic-700-arabic.woff2',
 ];
