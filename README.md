@@ -60,6 +60,10 @@ REFERENCES.md         قائمة المصادر والتراخيص وطريقة 
 - التلاوات تُبثّ من everyayah.com ولا تُخزَّن في المشروع.
 - المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن.
 
+## للتواصل والاستفسارات
+
+لأي سؤال أو ملاحظة: [Eng.majid.f@outlook.com](mailto:Eng.majid.f@outlook.com) (يظهر العنوان أيضًا في صفحتي «المزيد» و«الإعدادات» داخل التطبيق).
+
 ## Developer guide (English)
 
 A quick orientation for new contributors. Every file also starts with a header comment explaining what it does.
