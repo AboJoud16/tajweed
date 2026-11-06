@@ -51,6 +51,7 @@
     search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
     quran: '<svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M6 17h13M9 7h6M9 10.5h4"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>',
+    mail: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
     next: '<svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>',
     prev: '<svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>',
     more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
@@ -81,6 +82,11 @@
     { href: '#/more', icon: 'more', label: 'المزيد', match: r => MORE_ROUTES.includes(r), side: false },
   ];
   // Page titles for the browser tab (routes not in NAV, or with a better name).
+  // Contact address for user questions and feedback, shown on the More hub
+  // and the Settings page.
+  const CONTACT_EMAIL = 'Eng.majid.f@outlook.com';
+  const contactHref = 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent('استفسار عن موسوعة التجويد');
+
   const TITLES = { more: 'المزيد', quiz: 'اختبار' };
   // One nav link; the active one also gets aria-current for screen readers.
   const navLink = (n, on) => `<a href="${n.href}" class="${on ? 'active' : ''}"${on ? ' aria-current="page"' : ''}>${I[n.icon]}<span>${n.label}</span></a>`;
@@ -455,6 +461,8 @@
       ['#/search', 'search', 'بحث', 'ابحث في الأحكام والأبواب والمصطلحات'],
       ['#/settings', 'settings', 'الإعدادات', 'المظهر، القارئ، حجم الخط، مسح التقدّم'],
     ];
+    // Last item opens the user's mail app (mailto), not an in-app route.
+    items.push([contactHref, 'mail', 'للتواصل والاستفسارات', `<span dir="ltr">${CONTACT_EMAIL}</span>`]);
     return `<h1>المزيد</h1><div class="menu-list">${items.map(([h, ic, t, d]) => `<a class="menu-item" href="${h}"><span class="ic">${I[ic]}</span><span><b>${t}</b><span class="muted">${d}</span></span>${I.next}</a>`).join('')}</div>`;
   };
 
@@ -475,7 +483,8 @@
       <div class="setting"><div><b>حجم خط الآيات</b></div><input id="fs" type="range" min=".8" max="1.5" step=".05" value="${s.fontScale || 1}"></div>
       <div class="setting"><div><b>مسح التقدّم</b><div class="muted" style="font-size:.85rem">يحذف الأبواب المكتملة ونتائج الاختبارات من هذا الجهاز</div></div><button class="btn small" id="reset" type="button" style="color:var(--danger)">مسح</button></div>
     </div>
-    <div class="card" style="margin-top:14px"><h3>عن التطبيق</h3><p class="muted" style="margin:6px 0 0">موسوعة التجويد: تطبيق مفتوح لتعلّم أحكام تجويد القرآن الكريم برواية حفص عن عاصم من طريق الشاطبية. المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن. الخطوط: Amiri وAmiri Quran وNoto Naskh Arabic برخصة SIL OFL. التلاوات من everyayah.com. يعمل التطبيق كليًّا في المتصفح ولا يرسل أي بيانات.</p></div>`;
+    <div class="card" style="margin-top:14px"><h3>عن التطبيق</h3><p class="muted" style="margin:6px 0 0">موسوعة التجويد: تطبيق مفتوح لتعلّم أحكام تجويد القرآن الكريم برواية حفص عن عاصم من طريق الشاطبية. المحتوى تعليمي مبسّط ولا يُغني عن التلقّي عن شيخ متقن. الخطوط: Amiri وAmiri Quran وNoto Naskh Arabic برخصة SIL OFL. التلاوات من everyayah.com. يعمل التطبيق كليًّا في المتصفح ولا يرسل أي بيانات.</p></div>
+    <div class="card" style="margin-top:14px"><h3>للتواصل والاستفسارات</h3><p class="muted" style="margin:6px 0 0">لأي سؤال أو ملاحظة أو خطأ تلاحظه في التطبيق، راسلنا على: <a href="${contactHref}" dir="ltr">${CONTACT_EMAIL}</a></p></div>`;
   };
 
   // 'light' | 'dark' set data-theme on <html>; 'auto' removes it so CSS follows
