@@ -58,6 +58,7 @@ Names, revelation type (مكية/مدنية), ayah counts and the 30 juz start p
 | --- | --- |
 | Provider | `https://everyayah.com` (per-ayah MP3 files) |
 | URL pattern | `https://everyayah.com/data/<reciter>/<SSS><AAA>.mp3`, surah and ayah zero-padded to three digits, e.g. `Husary_128kbps/002005.mp3` |
+| Isti'adha and basmalah | When a whole surah is played from the start, the player first plays `<reciter>/audhubillah.mp3` (isti'adha; skipped if the reciter's folder lacks it), then `<reciter>/001001.mp3` (al-Fatihah ayah 1, the basmalah) for every surah except 1 and 9, then the ayat |
 | Reciters offered | `Husary_128kbps` (الحصري، مرتّل, default), `Husary_Muallim_128kbps` (الحصري، المصحف المعلّم), `Abdul_Basit_Murattal_192kbps`, `Minshawy_Murattal_128kbps`, `Alafasy_128kbps` |
 | Terms | everyayah.com publishes no license text we could find; the app links to the files at playback time and does not copy or redistribute them. Copyright in each recitation remains with its reciter/publisher |
 | Verification | The files could not be fetched from the build environment (network policy), so playback was tested only for correct URL construction and error handling. Please spot-check a few ayat on the live site |

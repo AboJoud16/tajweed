@@ -128,6 +128,11 @@ window.TAJWEED = window.TAJWEED || {};
     const reciter = T.store.settings().reciter || 'Husary_128kbps';
     return `https://everyayah.com/data/${reciter}/${pad(s, 3)}${pad(a, 3)}.mp3`;
   };
+  // URL of any other file in the chosen reciter's folder (e.g. 'audhubillah' for the isti'adha).
+  T.audioFileUrl = function (name) {
+    const reciter = T.store.settings().reciter || 'Husary_128kbps';
+    return `https://everyayah.com/data/${reciter}/${name}.mp3`;
+  };
   T.audioHtml = (s, a) => `<span class="audio"><button type="button" class="play" data-s="${s}" data-a="${a}" aria-label="استمع للآية"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>استمع</span></button></span>`;
 
   // A single shared <audio> element is reused for every ayah, so only one

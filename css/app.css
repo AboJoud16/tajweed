@@ -369,6 +369,7 @@ table.marks td:first-child { font-family: var(--font-quran); font-size: 1.5rem; 
 .mushaf .ay { transition: background .2s; border-radius: 6px; scroll-margin-top: 90px; }
 .mushaf .ay.focus { background: var(--accent-soft); box-shadow: 0 0 0 4px var(--accent-soft); }
 .mushaf .ay.playing { background: var(--primary-soft); box-shadow: 0 0 0 4px var(--primary-soft); }
+.mushaf .istiadha.playing, .mushaf .basmalah.playing { background: var(--primary-soft); border-radius: 10px; }
 .mushaf.list .ayah.ay.playing { border-color: var(--primary); }
 .mushaf.list .ayah .q { line-height: 2.3; }
 .mushaf.list .ayah .ref .row { gap: 4px; }
