@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Small-size mark (favicon, header): the letter ta alone, readable at 16-36px. -->
+  <rect width="512" height="512" rx="116" fill="#0f6e56"/>
+  <g transform="translate(256 270) scale(1.08) translate(-256 -270)">
+    <path d="M392 176C420 186 428 236 418 270C398 336 330 372 252 372C170 372 108 334 92 262C90 252 96 248 102 256C130 300 186 318 252 318C318 318 360 300 368 262C374 236 368 206 356 190C350 180 378 172 392 176Z" fill="#fffdf8"/>
+    <rect x="214" y="176" width="44" height="44" rx="5" transform="rotate(45 236 198)" fill="#d9b35c"/><rect x="272" y="176" width="44" height="44" rx="5" transform="rotate(45 294 198)" fill="#e8705f"/>
+  </g>
+</svg>

@@ -71,6 +71,8 @@ Names, revelation type (مكية/مدنية), ayah counts and the 30 juz start p
 | Amiri (400/700) | Headings | same project (`@fontsource/amiri`) | SIL OFL 1.1 |
 | Noto Naskh Arabic (400-700) | UI text | Google Noto fonts (`@fontsource/noto-naskh-arabic`) | SIL OFL 1.1 |
 
+The logo and app icons (`icons/`) are original vector artwork drawn for this project (hand-written SVG paths, no font or third-party image), so they carry no outside license.
+
 ## 8. Educational content (`js/data/chapters.js`, `rules.js`, `glossary.js`, `quizzes.js`)
 
 The lesson text, rule definitions, glossary and quiz questions were written for this app (by Claude at the project owner's request) following the standard Hafs tajweed syllabus as taught from:
