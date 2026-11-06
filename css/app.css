@@ -91,7 +91,7 @@ p { margin: 0 0 .8em; }
 }
 .topbar.scrolled { box-shadow: 0 6px 20px -14px rgba(0,0,0,.35); }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-weight: 700; font-size: 1.25rem; color: var(--text); }
-/* Brand mark: the letter ta from icons/favicon.svg, drawn inline; the tile stays the brand green in both themes. */
+/* Brand mark: the star + mushaf artwork from icons/icon.svg, drawn inline; the tile stays the brand green in both themes. */
 .brand .mark { width: 36px; height: 36px; border-radius: 10px; background: #0f6e56; display: grid; place-items: center; box-shadow: var(--shadow); overflow: hidden; }
 .brand .mark svg { width: 100%; height: 100%; display: block; }
 .topbar .spacer { flex: 1; }

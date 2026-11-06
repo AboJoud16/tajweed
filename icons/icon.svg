@@ -1,12 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- App icon: letter ta (initial of tajweed) with dots in two rule colours, inside an eight-point star. Original artwork for this project. -->
+  <!-- App icon: open mushaf whose lines are in tajweed rule colours, on a gold eight-point star. Original artwork for this project. -->
   <rect width="512" height="512" rx="116" fill="#0f6e56"/>
-  <g fill="none" stroke="#d9b35c" stroke-width="16" stroke-linejoin="round" opacity=".9">
-    <rect x="120" y="120" width="272" height="272" rx="14"/>
-    <rect x="120" y="120" width="272" height="272" rx="14" transform="rotate(45 256 256)"/>
-  </g>
-  <g transform="translate(256 262) scale(.74) translate(-256 -262)">
-    <path d="M392 176C420 186 428 236 418 270C398 336 330 372 252 372C170 372 108 334 92 262C90 252 96 248 102 256C130 300 186 318 252 318C318 318 360 300 368 262C374 236 368 206 356 190C350 180 378 172 392 176Z" fill="#fffdf8"/>
-    <rect x="214" y="176" width="44" height="44" rx="5" transform="rotate(45 236 198)" fill="#d9b35c"/><rect x="272" y="176" width="44" height="44" rx="5" transform="rotate(45 294 198)" fill="#e8705f"/>
-  </g>
+  <g fill="#d9b35c"><rect x="116" y="116" width="280" height="280" rx="18"/><rect x="116" y="116" width="280" height="280" rx="18" transform="rotate(45 256 256)"/></g><path d="M256 214C222 192 176 188 140 198V318C176 308 222 312 256 334C290 312 336 308 372 318V198C336 188 290 192 256 214Z" fill="#0f6e56"/><path d="M256 214V334" stroke="#d9b35c" stroke-width="8"/><g stroke-width="12" stroke-linecap="round"><path d="M168 236H230" stroke="#e8705f"/><path d="M168 266H230" stroke="#fffdf8"/><path d="M282 236H344" stroke="#fffdf8"/><path d="M282 266H344" stroke="#7fdcbb"/></g>
 </svg>
