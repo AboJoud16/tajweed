@@ -209,7 +209,7 @@ window.TAJWEED = window.TAJWEED || {};
     const mode = e.target.closest('[data-mode]'); if (mode && current) { store.setMushaf({ mode: mode.dataset.mode }); document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b === mode)); const box = document.getElementById('mushaf'); box.classList.toggle('list', mode.dataset.mode === 'list'); box.classList.toggle('flow', mode.dataset.mode !== 'list'); drawReader(current.data, surahMeta(current.s), 0); return; }
     const color = e.target.closest('#m-color'); if (color) { const on = !(store.mushaf().color !== false); store.setMushaf({ color: on }); color.setAttribute('aria-pressed', on); color.classList.toggle('on-color', on); document.getElementById('mushaf').classList.toggle('nocolor', !on); return; }
     const fs = e.target.closest('[data-fs]'); if (fs) { const cur = store.settings().fontScale || 1; const v = Math.min(1.8, Math.max(.7, +(cur + .1 * +fs.dataset.fs).toFixed(2))); store.setSetting('fontScale', v); T.applyFont && T.applyFont(); return; }
-    const play = e.target.closest('#m-play'); if (play && current) { if (player.playing && player.s === current.s) stopPlayer(); else playFrom(current.s, 1); return; }
+    const play = e.target.closest('#m-play'); if (play && current) { if (player.playing && player.s === current.s) stopPlayer(); else playSurah(current.s); return; }
   });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList?.contains('aya-num')) { e.preventDefault(); e.target.click(); } });
 
@@ -237,13 +237,15 @@ window.TAJWEED = window.TAJWEED || {};
   }
 
   /* ---------- التلاوة المتواصلة ---------- */
-  const player = { audio: null, s: 0, n: 0, playing: false };
+  const player = { audio: null, s: 0, n: 0, intro: null, playing: false };
   const bar = document.createElement('div'); bar.className = 'player'; bar.id = 'player'; bar.hidden = true; document.body.appendChild(bar);
   function drawPlayer(status) {
     if (!player.s) { bar.hidden = true; return; }
     const meta = surahMeta(player.s); const count = meta ? meta.count : 0;
     bar.hidden = false;
-    bar.innerHTML = `<div class="info"><b>${esc(meta ? meta.name : '')} ﴿${ar(player.n)}﴾</b><span class="muted">${status || (player.playing ? 'جارٍ التلاوة' : 'متوقّف')} · ${ar(player.n)} من ${ar(count)}</span></div>
+    const where = player.intro ? INTRO[player.intro].label : `﴿${ar(player.n)}﴾`;
+    const pos = player.intro ? '' : ` · ${ar(player.n)} من ${ar(count)}`;
+    bar.innerHTML = `<div class="info"><b>${esc(meta ? meta.name : '')} ${where}</b><span class="muted">${status || (player.playing ? 'جارٍ التلاوة' : 'متوقّف')}${pos}</span></div>
       <div class="ctl">
         <button type="button" class="icon-btn" id="pl-prev" aria-label="الآية السابقة" ${player.n <= 1 ? 'disabled' : ''}>${I.prev}</button>
         <button type="button" class="icon-btn big" id="pl-toggle" aria-label="${player.playing ? 'إيقاف مؤقت' : 'تشغيل'}">${player.playing ? I.pause : I.play}</button>
@@ -251,7 +253,7 @@ window.TAJWEED = window.TAJWEED || {};
         <button type="button" class="icon-btn" id="pl-stop" aria-label="إغلاق المشغّل">✕</button>
       </div>`;
     bar.querySelector('#pl-prev').addEventListener('click', () => playFrom(player.s, player.n - 1));
-    bar.querySelector('#pl-next').addEventListener('click', () => playFrom(player.s, player.n + 1));
+    bar.querySelector('#pl-next').addEventListener('click', () => playFrom(player.s, player.intro ? 1 : player.n + 1));
     bar.querySelector('#pl-stop').addEventListener('click', stopPlayer);
     bar.querySelector('#pl-toggle').addEventListener('click', () => {
       if (!player.audio) return;
@@ -259,13 +261,45 @@ window.TAJWEED = window.TAJWEED || {};
       else { player.audio.play().catch(() => {}); player.playing = true; drawPlayer(); }
     });
   }
+  // Intro clips recited before ayah 1 when the whole surah is played from the start.
+  // Both are separate everyayah.com files in the chosen reciter's folder:
+  //   isti'adha -> audhubillah.mp3 (if a reciter lacks it, it is skipped silently)
+  //   basmalah  -> 001001.mp3 (al-Fatiha ayah 1, which is the basmalah)
+  // `sel` is the on-page element highlighted while the clip plays.
+  const INTRO = {
+    istiadha: { label: 'الاستعاذة', file: 'audhubillah', sel: '#mushaf .istiadha' },
+    basmalah: { label: 'البسملة', file: '001001', sel: '#mushaf .basmalah' },
+  };
+  // Plays the whole surah: isti'adha, then the basmalah (except al-Fatiha, where it is ayah 1,
+  // and at-Tawbah, which has none), then the ayat from 1.
+  function playSurah(s) {
+    const steps = ['istiadha'];
+    if (s !== 1 && s !== 9) steps.push('basmalah');
+    playIntro(s, steps);
+  }
+  function playIntro(s, steps) {
+    if (!steps.length) { playFrom(s, 1); return; }
+    const step = steps[0], rest = steps.slice(1);
+    T.stopAudio();
+    player.audio = player.audio || new Audio();
+    const a = player.audio; a.onended = null; a.onerror = null; a.onplaying = null;
+    player.s = s; player.n = 0; player.intro = step; player.playing = true;
+    a.src = T.audioFileUrl(INTRO[step].file);
+    a.onplaying = () => drawPlayer();
+    a.onended = () => playIntro(s, rest);
+    // A missing intro clip must never block the recitation: move on to the next step.
+    a.onerror = () => playIntro(s, rest);
+    a.play().catch(() => a.onerror && a.onerror());
+    drawPlayer('جارٍ التحميل…');
+    highlightPlaying(true);
+  }
   // Starts continuous recitation at surah s, ayah n; `onended` chains to the next ayah until the surah ends.
   function playFrom(s, n) {
     const meta = surahMeta(s); if (!meta || n < 1 || n > meta.count) { stopPlayer(); return; }
     T.stopAudio();
     player.audio = player.audio || new Audio();
     const a = player.audio; a.onended = null; a.onerror = null; a.onplaying = null;
-    player.s = s; player.n = n; player.playing = true;
+    player.s = s; player.n = n; player.intro = null; player.playing = true;
     a.src = T.audioUrl(s, n);
     a.onplaying = () => drawPlayer();
     a.onended = () => { if (n < meta.count) playFrom(s, n + 1); else { stopPlayer(); toast('انتهت السورة'); } };
@@ -277,17 +311,17 @@ window.TAJWEED = window.TAJWEED || {};
   }
   function stopPlayer() {
     if (player.audio) { player.audio.pause(); player.audio.onended = null; player.audio.onerror = null; }
-    player.s = 0; player.n = 0; player.playing = false; bar.hidden = true;
+    player.s = 0; player.n = 0; player.intro = null; player.playing = false; bar.hidden = true;
     highlightPlaying();
     const pb = document.getElementById('m-play'); if (pb) pb.innerHTML = `${I.play} استمع للسورة`;
   }
   T.stopMushafPlayer = stopPlayer;
   function highlightPlaying(scroll) {
-    document.querySelectorAll('#mushaf .ay.playing').forEach(el => el.classList.remove('playing'));
+    document.querySelectorAll('#mushaf .playing').forEach(el => el.classList.remove('playing'));
     const pb = document.getElementById('m-play');
     if (!player.s || !current || current.s !== player.s) { if (pb) pb.innerHTML = `${I.play} استمع للسورة`; return; }
     if (pb) pb.innerHTML = `${I.pause} إيقاف التلاوة`;
-    const el = document.getElementById('ayah-' + player.n);
+    const el = player.intro ? document.querySelector(INTRO[player.intro].sel) : document.getElementById('ayah-' + player.n);
     if (el) { el.classList.add('playing'); if (scroll) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   }
   /* إيقاف المشغّل عند مغادرة المصحف، وإيقافه عند تشغيل مقطع آية من مكان آخر */
