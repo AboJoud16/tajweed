@@ -103,8 +103,8 @@ Coloured Quran text uses the markup `{ruleId|text to colour|optional why-note}` 
 
 ### Brand
 
-- Logo: the letter ت (initial of تجويد) with its two dots in two tajweed rule colours (gold `#d9b35c`, coral `#e8705f`), framed by an eight-point star. Original SVG paths, no font needed.
-- `icons/icon.svg` is the full app icon (star + letter); `icons/favicon.svg` is the small-size mark (letter only) used for the browser tab and inlined in the header (`.brand .mark` in `index.html`). PNGs: `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (full-bleed, for Android), `apple-touch-icon.png` (180px). Re-render the PNGs from the SVGs if the artwork changes.
+- Logo: an open mushaf whose lines are drawn in tajweed rule colours (coral, cream, mint), on a gold eight-point star over the brand green. Original SVG paths, no font needed.
+- `icons/icon.svg` is the app icon and `icons/favicon.svg` the browser-tab icon (same artwork); it is also inlined in the header (`.brand .mark` in `index.html`). PNGs: `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (full-bleed, for Android), `apple-touch-icon.png` (180px). Re-render the PNGs from the SVGs if the artwork changes.
 - Colours: brand green `#0f6e56` (deep `#0a4d3c`), gold accent `#d9b35c`, paper `#f6f1e7`. The header tile and home hero keep the brand green in dark mode too.
 
 ### Conventions
