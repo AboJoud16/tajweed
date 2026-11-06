@@ -163,7 +163,8 @@ window.TAJWEED = window.TAJWEED || {};
 
   /* ---------- بطاقة الشرح ---------- */
   // The bottom sheet (#sheet and #sheet-backdrop live in index.html). It closes
-  // on backdrop click, on Escape, and on every route change (app.js render()).
+  // on backdrop click, on Escape, on swipe down, and on every route change
+  // (app.js render()).
   // activeSpan is the coloured word the user tapped, kept highlighted while open.
   const sheet = document.getElementById('sheet');
   const backdrop = document.getElementById('sheet-backdrop');
@@ -186,6 +187,42 @@ window.TAJWEED = window.TAJWEED || {};
   T.openSheet = openSheet;
   backdrop.addEventListener('click', closeSheet);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+  // Swipe down to dismiss (touch). A drag starts on the grip, or anywhere in
+  // the sheet while its content is scrolled to the top. The sheet follows the
+  // finger downward (never upward); on release it closes if dragged far
+  // enough or flicked fast, otherwise it snaps back. preventDefault stops the
+  // page behind from scrolling and the browser's pull-to-refresh.
+  let drag = null;
+  sheet.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1 || !sheet.classList.contains('open')) return;
+    const onGrip = !!e.target.closest('.grip');
+    if (!onGrip && sheet.scrollTop > 0) return;
+    drag = { y0: e.touches[0].clientY, t0: Date.now(), dy: 0, active: onGrip };
+  }, { passive: true });
+  sheet.addEventListener('touchmove', e => {
+    if (!drag) return;
+    const dy = e.touches[0].clientY - drag.y0;
+    // Content drag that starts upward is a normal scroll: give it back.
+    if (!drag.active) { if (dy < -4) { drag = null; return; } if (dy > 4) drag.active = true; else return; }
+    if (e.cancelable) e.preventDefault();
+    drag.dy = Math.max(0, dy);
+    sheet.style.transition = 'none';
+    sheet.style.translate = `0 ${drag.dy}px`;
+  }, { passive: false });
+  function endDrag() {
+    if (!drag) return;
+    const { dy, t0, active } = drag; drag = null;
+    if (!active) return;
+    sheet.style.transition = '';
+    const fast = dy > 30 && dy / Math.max(1, Date.now() - t0) > 0.5; // px per ms
+    if (dy > Math.min(120, sheet.offsetHeight * 0.25) || fast) closeSheet();
+    sheet.style.translate = '';
+  }
+  sheet.addEventListener('touchend', endDrag);
+  sheet.addEventListener('touchcancel', endDrag);
+  // Swallow touch scrolling on the backdrop so the page behind stays still.
+  backdrop.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 
   // Open the sheet for a rule.
   //   ruleId - id from rules.js (required)
